@@ -15,5 +15,6 @@
   "Dependencies": {},
   "OptionalDependencies": {},
   "DisabledByDefault": false,
-  "Main": "dev.nxtime.hidearmor.HideArmorPlugin"
+  "Main": "dev.nxtime.hidearmor.HideArmorPlugin",
+  "IncludesAssetPack": true
 }
