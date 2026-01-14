@@ -1,4 +1,4 @@
-# HideHelmet / HideArmor v1.0.0
+# HideHelmet / HideArmor v0.1.0-alpha
 
 Self-only armor visibility toggles for Hytale servers.  
 Lets each player hide or show their **own armor pieces only in their own view**, without changing inventory, stats, or what other players see.
@@ -81,3 +81,6 @@ HideArmor: Head, Legs
 
 - **Self-only by design**: this is a client-view convenience feature, **not** a disguise or cosmetic system.
 - Only armor visuals are modified; tools in hands are untouched.
+
+
+Taken inspiration from [PabloBora/HideHelmet](https://github.com/PabloBora/HideHelmet)
