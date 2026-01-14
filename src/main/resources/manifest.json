@@ -1,0 +1,19 @@
+{
+  "Group": "dev.nxtime",
+  "Name": "HideArmor",
+  "Version": "0.1.0",
+  "Description": "Toggle to hide armor visuals while keeping armor stats.",
+  "Authors": [
+    {
+      "Name": "Marcos Paulo",
+      "Email": "",
+      "Url": ""
+    }
+  ],
+  "Website": "",
+  "ServerVersion": "*",
+  "Dependencies": {},
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "Main": "dev.nxtime.hidearmor.HideArmorPlugin"
+}
