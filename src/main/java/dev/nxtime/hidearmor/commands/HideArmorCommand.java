@@ -24,8 +24,8 @@ public class HideArmorCommand extends CommandBase {
 
         String[] args = parseArgs(context, "hidearmor");
         if (args.length == 0) {
-            sendHelp(player);
-            sendStatus(player);
+            // Open the GUI when no arguments provided
+            openGui(player);
             return;
         }
 
@@ -125,6 +125,25 @@ public class HideArmorCommand extends CommandBase {
         }
 
         return parts;
+    }
+
+    private void openGui(Player player) {
+        var ref = player.getReference();
+        if (ref != null && ref.isValid()) {
+            var store = ref.getStore();
+            var world = store.getExternalData().getWorld();
+
+            world.execute(() -> {
+                var playerRefComponent = store.getComponent(ref,
+                        com.hypixel.hytale.server.core.universe.PlayerRef.getComponentType());
+
+                if (playerRefComponent != null) {
+                    player.getPageManager().openCustomPage(ref, store,
+                            new dev.nxtime.hidearmor.gui.HideArmorGuiPage(playerRefComponent,
+                                    com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime.CanDismiss));
+                }
+            });
+        }
     }
 
     private void forceRefresh(Player player) {

@@ -25,7 +25,22 @@ public class HideArmorUICommand extends CommandBase {
         if (!(sender instanceof Player player))
             return;
 
-        displayUI(player);
+        var ref = player.getReference();
+        if (ref != null && ref.isValid()) {
+            var store = ref.getStore();
+            var world = store.getExternalData().getWorld();
+
+            world.execute(() -> {
+                var playerRefComponent = store.getComponent(ref,
+                        com.hypixel.hytale.server.core.universe.PlayerRef.getComponentType());
+
+                if (playerRefComponent != null) {
+                    player.getPageManager().openCustomPage(ref, store,
+                            new dev.nxtime.hidearmor.gui.HideArmorGuiPage(playerRefComponent,
+                                    com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime.CanDismiss));
+                }
+            });
+        }
     }
 
     private void displayUI(Player player) {

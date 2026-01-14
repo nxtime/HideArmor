@@ -12,6 +12,7 @@ import dev.nxtime.hidearmor.commands.HideArmorCommand;
 import dev.nxtime.hidearmor.commands.HideArmorUICommand;
 import dev.nxtime.hidearmor.commands.HideHelmetCommand;
 import dev.nxtime.hidearmor.commands.HideHelmetDebugCommand;
+import dev.nxtime.hidearmor.gui.HideArmorGui;
 import dev.nxtime.hidearmor.net.HideArmorPacketReceiver;
 
 import javax.annotation.Nonnull;
@@ -48,6 +49,15 @@ public class HideArmorPlugin extends JavaPlugin {
 
     @Override
     protected void setup() {
+        // Initialize GUI with logger
+        HideArmorGui.init((level, message) -> {
+            switch (level) {
+                case "WARNING" -> this.getLogger().at(Level.WARNING).log(message);
+                case "SEVERE" -> this.getLogger().at(Level.SEVERE).log(message);
+                default -> this.getLogger().at(Level.INFO).log(message);
+            }
+        });
+
         initDataFile();
         int loadedCount = loadStateFromDisk();
         this.getLogger().at(Level.INFO).log("HideHelmet enabled (self-only). Loaded " + loadedCount + " players.");
