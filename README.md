@@ -1,4 +1,4 @@
-# HideHelmet / HideArmor v0.1.0-alpha
+# HideHelmet / HideArmor v0.3.0-alpha
 
 Self-only armor visibility toggles for Hytale servers.  
 Lets each player hide or show their **own armor pieces only in their own view**, without changing inventory, stats, or what other players see.
@@ -39,6 +39,7 @@ Output:
 | `/hidearmor` | Show help + current status |
 | `/hidearmor status` | Show hidden slots |
 | `/hidearmor <slot>` | Toggle slot (`head`, `chest`, `hands`, `legs`) |
+| `/hidearmor ui` | Opens Gui menu for toggle |
 | `/hidearmor on <slot>` | Force hide slot |
 | `/hidearmor off <slot>` | Force show slot |
 | `/hidearmor all` | Toggle all slots |
