@@ -39,7 +39,7 @@ Output:
 | `/hidearmor` | Show help + current status |
 | `/hidearmor status` | Show hidden slots |
 | `/hidearmor <slot>` | Toggle slot (`head`, `chest`, `hands`, `legs`) |
-| `/hidearmor ui` | Opens Gui menu for toggle |
+| `/hidearmorui` | Opens Gui menu for toggle |
 | `/hidearmor on <slot>` | Force hide slot |
 | `/hidearmor off <slot>` | Force show slot |
 | `/hidearmor all` | Toggle all slots |
