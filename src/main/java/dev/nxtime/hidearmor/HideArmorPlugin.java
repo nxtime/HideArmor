@@ -12,6 +12,7 @@ import dev.nxtime.hidearmor.commands.HideArmorCommand;
 import dev.nxtime.hidearmor.commands.HideArmorUICommand;
 import dev.nxtime.hidearmor.commands.HideHelmetCommand;
 import dev.nxtime.hidearmor.commands.HideHelmetDebugCommand;
+// import dev.nxtime.hidearmor.commands.HideArmorTestCommand; // Uncomment for test mode
 import dev.nxtime.hidearmor.gui.HideArmorGui;
 import dev.nxtime.hidearmor.net.HideArmorPacketReceiver;
 
@@ -30,23 +31,83 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+/**
+ * Main plugin class for HideArmor - advanced armor visibility control for Hytale servers.
+ * <p>
+ * This plugin allows players to:
+ * <ul>
+ *   <li>Hide their own armor pieces from their view</li>
+ *   <li>Hide other players' armor (with mutual opt-in)</li>
+ *   <li>Control which armor pieces others can hide on them</li>
+ * </ul>
+ * <p>
+ * The plugin wraps each player's packet receiver to intercept outgoing {@code EntityUpdates}
+ * packets and modify equipment data based on visibility settings. All changes are purely
+ * visual and do not affect server-side gameplay mechanics.
+ * <p>
+ * <b>Persistence:</b> Player settings are automatically saved to {@code players.json} with
+ * a 1.5 second debounce to reduce disk I/O.
+ * <p>
+ * <b>Thread Safety:</b> Uses concurrent data structures and world-threaded execution for
+ * all entity operations.
+ *
+ * @author nxtime
+ * @version 0.4.0
+ * @see HideArmorState
+ * @see HideArmorPacketReceiver
+ */
 public class HideArmorPlugin extends JavaPlugin {
 
-    private static final int MAX_MASK = 15;
+    /** Maximum valid bitmask value (12 bits: 2^12 - 1). */
+    private static final int MAX_MASK = 4095;
 
+    /** Lock for synchronizing save operations. */
     private final Object saveLock = new Object();
+
+    /** JSON serializer with pretty printing for human-readable save files. */
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
+    /** The file where player settings are persisted. */
     private File dataFile;
+
+    /** Executor service for debounced background saves. */
     private ScheduledExecutorService saveExecutor;
+
+    /** Currently scheduled save task, or null if none pending. */
     private ScheduledFuture<?> pendingSave;
+
+    /** Whether unsaved changes exist. */
     private boolean dirty;
+
+    /**
+     * Rate limiting for equipment invalidation per player.
+     * Maps player UUID to last invalidation timestamp in milliseconds.
+     */
     private final Map<UUID, Long> lastInvalidateByPlayer = new ConcurrentHashMap<>();
 
+    /**
+     * Constructs the plugin instance.
+     *
+     * @param init the plugin initialization context
+     */
     public HideArmorPlugin(@Nonnull JavaPluginInit init) {
         super(init);
     }
 
+    /**
+     * Sets up the plugin during server startup.
+     * <p>
+     * Initialization sequence:
+     * <ol>
+     *   <li>Initialize GUI system with logging bridge</li>
+     *   <li>Create/load persistent storage file</li>
+     *   <li>Load saved player settings from disk</li>
+     *   <li>Register onChange callback for auto-save</li>
+     *   <li>Register commands</li>
+     *   <li>Install packet receivers for all players</li>
+     *   <li>Hook inventory change events for armor refresh</li>
+     * </ol>
+     */
     @Override
     protected void setup() {
         // Initialize GUI with logger
@@ -76,6 +137,11 @@ public class HideArmorPlugin extends JavaPlugin {
         this.getCommandRegistry().registerCommand(
                 new HideHelmetDebugCommand("hhdebug", "Print armor slot indices"));
 
+        // Test mode for single-player testing (disabled in production)
+        // Uncomment to enable: /hidearmor test enable/disable/status/simulate
+        // this.getCommandRegistry().registerCommand(
+        //         new HideArmorTestCommand("hidearmortest", "Test mode for single player"));
+
         // Install packet wrapper per player when they are ready
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, (event) -> {
             Player player = event.getPlayer();
@@ -100,7 +166,8 @@ public class HideArmorPlugin extends JavaPlugin {
                         viewer.packetReceiver = new HideArmorPacketReceiver(
                                 viewer.packetReceiver,
                                 player.getUuid(),
-                                player.getNetworkId());
+                                player.getNetworkId(),
+                                world);
                     }
 
                     if (HideArmorState.getMask(player.getUuid()) != 0) {
@@ -146,6 +213,11 @@ public class HideArmorPlugin extends JavaPlugin {
         });
     }
 
+    /**
+     * Cleans up resources during server shutdown.
+     * <p>
+     * Performs a final save of all player settings and shuts down the save executor.
+     */
     @Override
     protected void shutdown() {
         int savedCount = saveStateToDisk();
@@ -155,6 +227,11 @@ public class HideArmorPlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * Initializes the data directory and creates the players.json file if it doesn't exist.
+     * <p>
+     * Also creates the background executor service for debounced saves.
+     */
     private void initDataFile() {
         Path dataDir = getDataDirectory();
         if (dataDir == null)
@@ -181,6 +258,13 @@ public class HideArmorPlugin extends JavaPlugin {
         });
     }
 
+    /**
+     * Marks state as dirty and schedules a debounced save operation.
+     * <p>
+     * If a save is already scheduled, this does nothing. Otherwise, schedules
+     * a save to execute 1.5 seconds from now. This debouncing reduces disk I/O
+     * when multiple rapid changes occur.
+     */
     private void markDirtyAndScheduleSave() {
         dirty = true;
         if (saveExecutor == null)
@@ -193,6 +277,14 @@ public class HideArmorPlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * Loads player settings from the persistent storage file.
+     * <p>
+     * Reads {@code players.json}, validates all entries, and populates {@link HideArmorState}
+     * silently (without triggering save callbacks). Invalid entries are skipped.
+     *
+     * @return the number of players successfully loaded
+     */
     private int loadStateFromDisk() {
         if (dataFile == null || !dataFile.exists())
             return 0;
@@ -227,6 +319,16 @@ public class HideArmorPlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * Saves all player settings to the persistent storage file.
+     * <p>
+     * Creates a snapshot of current state, filters out invalid/zero masks, serializes
+     * to JSON, and writes to disk. Only saves if dirty flag is set.
+     * <p>
+     * If save fails, re-marks state as dirty for retry on next trigger.
+     *
+     * @return the number of players successfully saved
+     */
     private int saveStateToDisk() {
         if (dataFile == null)
             return 0;
@@ -266,7 +368,13 @@ public class HideArmorPlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * Data model for JSON serialization of player settings.
+     * <p>
+     * Format: {@code {"players": {"uuid-string": mask-integer}}}
+     */
     private static final class SaveModel {
+        /** Map of player UUID strings to their 12-bit mask values. */
         Map<String, Integer> players = new HashMap<>();
     }
 }

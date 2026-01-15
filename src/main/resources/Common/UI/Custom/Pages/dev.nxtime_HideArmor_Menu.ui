@@ -2,12 +2,12 @@ $C = "../Common.ui";
 
 $C.@PageOverlay {
   $C.@Container {
-    Anchor: (Width: 400, Height: 350);
+    Anchor: (Width: 450, Height: 675);
 
     #Title {
       Group {
         $C.@Title {
-          @Text = "Armor Visibility";
+          @Text = "Armor Visibility Settings";
         }
       }
     }
@@ -19,6 +19,18 @@ $C.@PageOverlay {
       Group #ArmorToggles {
         LayoutMode: Top;
         Padding: (Top: 5);
+
+        // Section 1: Hide My Own Armor
+        Label {
+          Anchor: ();
+          Style: (
+            FontSize: 16,
+            TextColor: #d4af37,
+            RenderBold: true
+          );
+          Text: "Hide My Own Armor";
+          Padding: (Bottom: 8, Top: 4);
+        }
 
         $C.@CheckBoxWithLabel #HelmetSetting {
           @Text = "Hide Helmet";
@@ -40,15 +52,101 @@ $C.@PageOverlay {
           Padding: (Bottom: 8);
         }
 
-        Group #Separator {
-          Anchor: (Top: 10, Bottom: 10, Height: 1);
+        Group #SelfSeparator {
+          Anchor: (Top: 5, Bottom: 5, Height: 1);
           OutlineColor: #93844c;
           OutlineSize: 0.5;
         }
 
         $C.@CheckBoxWithLabel #AllArmorSetting {
           @Text = "Hide All Armor";
-          Padding: (Top: 4);
+          Padding: (Top: 2, Bottom: 12);
+        }
+
+        // Section 2: Hide Other Players' Armor
+        Label {
+          Anchor: ();
+          Style: (
+            FontSize: 16,
+            TextColor: #d4af37,
+            RenderBold: true
+          );
+          Text: "Hide Other Players' Armor";
+          Padding: (Bottom: 8, Top: 8);
+        }
+
+        $C.@CheckBoxWithLabel #HideOthersHelmetSetting {
+          @Text = "Hide Helmets";
+          Padding: (Bottom: 8);
+        }
+
+        $C.@CheckBoxWithLabel #HideOthersChestSetting {
+          @Text = "Hide Chestplates";
+          Padding: (Bottom: 8);
+        }
+
+        $C.@CheckBoxWithLabel #HideOthersGauntletsSetting {
+          @Text = "Hide Gauntlets";
+          Padding: (Bottom: 8);
+        }
+
+        $C.@CheckBoxWithLabel #HideOthersLeggingsSetting {
+          @Text = "Hide Leggings";
+          Padding: (Bottom: 8);
+        }
+
+        Group #HideOthersSeparator {
+          Anchor: (Top: 5, Bottom: 5, Height: 1);
+          OutlineColor: #93844c;
+          OutlineSize: 0.5;
+        }
+
+        $C.@CheckBoxWithLabel #HideOthersAllSetting {
+          @Text = "Hide All (Others)";
+          Padding: (Top: 2, Bottom: 12);
+        }
+
+        // Section 3: Allow Others to Hide My Armor
+        Label {
+          Anchor: ();
+          Style: (
+            FontSize: 16,
+            TextColor: #d4af37,
+            RenderBold: true
+          );
+          Text: "Let Others Hide My Armor";
+          Padding: (Bottom: 8, Top: 8);
+        }
+
+        $C.@CheckBoxWithLabel #AllowOthersHelmetSetting {
+          @Text = "Allow Helmet";
+          Padding: (Bottom: 8);
+        }
+
+        $C.@CheckBoxWithLabel #AllowOthersChestSetting {
+          @Text = "Allow Chestplate";
+          Padding: (Bottom: 8);
+        }
+
+        $C.@CheckBoxWithLabel #AllowOthersGauntletsSetting {
+          @Text = "Allow Gauntlets";
+          Padding: (Bottom: 8);
+        }
+
+        $C.@CheckBoxWithLabel #AllowOthersLeggingsSetting {
+          @Text = "Allow Leggings";
+          Padding: (Bottom: 8);
+        }
+
+        Group #AllowOthersSeparator {
+          Anchor: (Top: 5, Bottom: 5, Height: 1);
+          OutlineColor: #93844c;
+          OutlineSize: 0.5;
+        }
+
+        $C.@CheckBoxWithLabel #AllowOthersAllSetting {
+          @Text = "Allow All";
+          Padding: (Top: 2);
         }
       }
     }

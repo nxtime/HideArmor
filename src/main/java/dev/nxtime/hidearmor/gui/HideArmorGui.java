@@ -7,32 +7,62 @@ import javax.annotation.Nonnull;
 import java.util.function.BiConsumer;
 
 /**
- * GUI controller for the HideArmor interactive menu.
- * Displays a UI page with checkboxes for toggling armor visibility.
- * 
- * This class attempts to use Hytale's .ui asset system (similar to AdminUI).
- * NOTE: The UI API may not be fully available in current Early Access SDK.
+ * Legacy GUI controller for the HideArmor interactive menu.
+ * <p>
+ * This class was created during early development to explore UI integration options.
+ * It includes fallback logic for chat-based UI and experimental checkbox handling.
+ * <p>
+ * <b>Current Status:</b> This class is no longer actively used. The plugin now uses
+ * {@link HideArmorGuiPage} which implements Hytale's native {@code InteractiveCustomUIPage}
+ * system with proper event bindings and UI asset loading.
+ * <p>
+ * The class is kept for reference and as a fallback in case the native UI system
+ * encounters issues. The {@link #init(BiConsumer)} method is still called during
+ * plugin setup to initialize logging.
+ *
+ * @author nxtime
+ * @version 0.4.0
+ * @see HideArmorGuiPage
+ * @see HideArmorState
+ * @deprecated Replaced by {@link HideArmorGuiPage}, no longer actively used
  */
+@Deprecated
 public class HideArmorGui {
 
+    /** Path to the UI asset file in the resources directory. */
     private static final String UI_PATH = "dev.nxtime_HideArmor_Menu.ui";
+
+    /** Logger function for warning and error messages. */
     private static BiConsumer<String, String> logger;
 
     /**
-     * Initializes the GUI with logging functions.
-     * This should be called during plugin setup.
-     * 
-     * @param logFunction Function that accepts (level, message) for logging
+     * Initializes the GUI system with a logging function.
+     * <p>
+     * This should be called during plugin setup to enable warning and error
+     * logging from the GUI system. The logger is still used even though this
+     * class is deprecated, as it provides diagnostic information.
+     *
+     * @param logFunction callback function that accepts (level, message) for logging,
+     *                    where level is "INFO", "WARNING", or "SEVERE"
      */
     public static void init(@Nonnull BiConsumer<String, String> logFunction) {
         logger = logFunction;
     }
 
     /**
-     * Opens the armor visibility GUI for the specified player.
-     * 
-     * @param player The player to open the GUI for
+     * Attempts to open the armor visibility GUI for the specified player.
+     * <p>
+     * This method was designed to explore different UI integration approaches but
+     * is no longer used. The plugin now opens the GUI via {@link HideArmorGuiPage}
+     * directly instead of calling this method.
+     * <p>
+     * If called, it will log a warning and fall back to the chat-based UI.
+     *
+     * @param player the player to open the GUI for
+     * @deprecated Use {@link dev.nxtime.hidearmor.commands.HideArmorCommand} or
+     *             {@link dev.nxtime.hidearmor.commands.HideArmorUICommand} instead
      */
+    @Deprecated
     public static void openFor(@Nonnull Player player) {
         try {
             // Load current armor state
@@ -73,11 +103,19 @@ public class HideArmorGui {
 
     /**
      * Handles checkbox toggle events from the UI.
-     * This will be called when a player clicks a checkbox.
-     * 
-     * @param player     The player who clicked
-     * @param checkboxId The ID of the checkbox clicked
+     * <p>
+     * This method was designed to process click events from the UI asset system
+     * but is no longer used. The plugin now handles events through
+     * {@link HideArmorGuiPage#handleDataEvent} instead.
+     * <p>
+     * If called, it would toggle the appropriate armor slot based on the checkbox ID
+     * and trigger an equipment refresh.
+     *
+     * @param player the player who clicked the checkbox
+     * @param checkboxId the ID of the checkbox clicked (e.g., "HelmetCheckbox")
+     * @deprecated Use {@link HideArmorGuiPage#handleDataEvent} instead
      */
+    @Deprecated
     public static void handleCheckboxToggle(@Nonnull Player player, @Nonnull String checkboxId) {
         int currentMask = HideArmorState.getMask(player.getUuid());
         int newMask = currentMask;
@@ -89,7 +127,7 @@ public class HideArmorGui {
                 newMask = HideArmorState.toggleSlot(player.getUuid(), HideArmorState.SLOT_HANDS);
             case "LeggingsCheckbox" -> newMask = HideArmorState.toggleSlot(player.getUuid(), HideArmorState.SLOT_LEGS);
             case "AllArmorCheckbox" -> {
-                boolean hideAll = currentMask != 15;
+                boolean hideAll = (currentMask & 0xF) != 0xF; // Only check self-armor bits (0-3)
                 newMask = HideArmorState.setAll(player.getUuid(), hideAll);
             }
         }
@@ -103,8 +141,19 @@ public class HideArmorGui {
     }
 
     /**
-     * Fallback to chat-based UI when .ui system is not available.
+     * Displays a fallback chat-based UI when the native UI system is unavailable.
+     * <p>
+     * Creates a bordered menu using formatted chat messages with checkbox-style
+     * indicators showing the current visibility state for each armor piece.
+     * <p>
+     * This fallback is no longer needed since {@link HideArmorGuiPage} successfully
+     * integrates with Hytale's native UI system.
+     *
+     * @param player the player to display the UI to
+     * @param mask the player's current 12-bit visibility mask
+     * @deprecated Fallback no longer needed with {@link HideArmorGuiPage}
      */
+    @Deprecated
     private static void sendChatFallback(Player player, int mask) {
         player.sendMessage(com.hypixel.hytale.server.core.Message.raw(""));
         player.sendMessage(com.hypixel.hytale.server.core.Message.raw("§6╔═══════════════════════════╗"));
@@ -120,7 +169,7 @@ public class HideArmorGui {
         player.sendMessage(com.hypixel.hytale.server.core.Message.raw(""));
         player.sendMessage(com.hypixel.hytale.server.core.Message.raw("§6╠═══════════════════════════╣"));
 
-        boolean allHidden = mask == 15;
+        boolean allHidden = (mask & 0xF) == 0xF; // Only check self-armor bits (0-3)
         String allCheckbox = allHidden ? "§a[§2✓§a]" : "§7[§8 §7]";
         String allStatus = allHidden ? "§7Hidden" : "§fVisible";
         player.sendMessage(com.hypixel.hytale.server.core.Message.raw(
@@ -131,6 +180,19 @@ public class HideArmorGui {
         player.sendMessage(com.hypixel.hytale.server.core.Message.raw("§7Use /hidearmor <piece> to toggle"));
     }
 
+    /**
+     * Sends a formatted checkbox line for a specific armor piece.
+     * <p>
+     * Part of the chat-based fallback UI. Displays a checkbox (checked or unchecked)
+     * alongside the armor piece name and its visibility status.
+     *
+     * @param player the player to send the message to
+     * @param label the armor piece name (e.g., "Helmet", "Chestplate")
+     * @param slot the armor slot index (0-3)
+     * @param mask the player's current 12-bit visibility mask
+     * @deprecated Part of fallback UI, no longer needed
+     */
+    @Deprecated
     private static void sendCheckboxLine(Player player, String label, int slot, int mask) {
         boolean hidden = (mask & (1 << slot)) != 0;
         String checkbox = hidden ? "§a[§2✓§a]" : "§7[§8 §7]";
@@ -145,10 +207,31 @@ public class HideArmorGui {
         player.sendMessage(com.hypixel.hytale.server.core.Message.raw(line));
     }
 
+    /**
+     * Removes Minecraft-style color formatting codes from a string.
+     * <p>
+     * Strips all § (section sign) color codes to get the plain text length
+     * for alignment calculations in the chat-based UI.
+     *
+     * @param text the text with formatting codes
+     * @return the plain text without color codes
+     * @deprecated Part of fallback UI, no longer needed
+     */
+    @Deprecated
     private static String removeFormatting(String text) {
         return text.replaceAll("§.", "");
     }
 
+    /**
+     * Forces an equipment refresh for the player to apply visual changes immediately.
+     * <p>
+     * Executes on the world thread to avoid concurrent modification issues.
+     * Silently catches and ignores any exceptions to prevent disrupting gameplay.
+     *
+     * @param player the player whose equipment should be refreshed
+     * @deprecated Use the forceRefresh methods in command classes instead
+     */
+    @Deprecated
     private static void forceRefresh(Player player) {
         var world = player.getWorld();
         if (world == null)
