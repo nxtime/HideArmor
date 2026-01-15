@@ -1,0 +1,25 @@
+// SectionHeader.ui - Reusable section header with separator
+// Usage: Append to a container and set #Title.Text dynamically
+
+$C = "../Common.ui";
+
+Group {
+  LayoutMode: Top;
+  Padding: (Top: 12, Bottom: 8);
+
+  Label #Title {
+    Anchor: ();
+    Style: (
+      FontSize: 16,
+      TextColor: #EAC568,
+      RenderBold: true
+    );
+    Text: "";
+  }
+
+  Group #Separator {
+    Anchor: (Top: 6, Height: 1);
+    OutlineColor: #93844c;
+    OutlineSize: 0.5;
+  }
+}

@@ -1,8 +1,38 @@
+// HideArmor Menu styled like Hytale Settings
+// Two-column layout with "Allow Others" on the right
+
 $C = "../Common.ui";
+$Container = "../Container.ui";
+
+// Define the settings row macro - smaller for better fit
+@SettingsRow = Group {
+  Anchor: (Height: 40, Bottom: 6);
+  Background: #1a2533;
+  LayoutMode: Left;
+
+  Label #Name {
+    Anchor: (Left: 16);
+    Style: (VerticalAlignment: Center, TextColor: #96a9be, RenderUppercase: false, FontSize: 16);
+  }
+
+  Group {
+    FlexWeight: 1;
+  }
+
+  $C.@CheckBox #CheckBox {
+    Anchor: (Width: 22, Height: 22, Right: 14);
+  }
+};
+
+// Section header macro
+@SectionHeader = Label {
+  Anchor: (Bottom: 12);
+  Style: (FontSize: 16, TextColor: #96a9be, RenderUppercase: true, RenderBold: true);
+};
 
 $C.@PageOverlay {
   $C.@Container {
-    Anchor: (Width: 450, Height: 675);
+    Anchor: (Width: 720, Height: 520);
 
     #Title {
       Group {
@@ -13,141 +43,48 @@ $C.@PageOverlay {
     }
 
     #Content {
-      LayoutMode: Top;
-      Padding: (Top: 10, Bottom: 10, Left: 20, Right: 20);
+      LayoutMode: Left;
+      Padding: (Top: 15, Bottom: 15, Left: 20, Right: 20);
 
-      Group #ArmorToggles {
+      // Left column: Self + Hide Others
+      Group #LeftColumn {
         LayoutMode: Top;
-        Padding: (Top: 5);
+        FlexWeight: 1;
+        Padding: (Right: 15);
 
         // Section 1: Hide My Own Armor
-        Label {
-          Anchor: ();
-          Style: (
-            FontSize: 16,
-            TextColor: #d4af37,
-            RenderBold: true
-          );
-          Text: "Hide My Own Armor";
-          Padding: (Bottom: 8, Top: 4);
-        }
+        @SectionHeader { Text: "HIDE MY OWN ARMOR"; }
 
-        $C.@CheckBoxWithLabel #HelmetSetting {
-          @Text = "Hide Helmet";
-          Padding: (Bottom: 8);
-        }
+        @SettingsRow #HelmetSetting { #Name { Text: "Hide Helmet"; } }
+        @SettingsRow #ChestSetting { #Name { Text: "Hide Chestplate"; } }
+        @SettingsRow #GauntletsSetting { #Name { Text: "Hide Gauntlets"; } }
+        @SettingsRow #LeggingsSetting { #Name { Text: "Hide Leggings"; } }
 
-        $C.@CheckBoxWithLabel #ChestSetting {
-          @Text = "Hide Chestplate";
-          Padding: (Bottom: 8);
-        }
-
-        $C.@CheckBoxWithLabel #GauntletsSetting {
-          @Text = "Hide Gauntlets";
-          Padding: (Bottom: 8);
-        }
-
-        $C.@CheckBoxWithLabel #LeggingsSetting {
-          @Text = "Hide Leggings";
-          Padding: (Bottom: 8);
-        }
-
-        Group #SelfSeparator {
-          Anchor: (Top: 5, Bottom: 5, Height: 1);
-          OutlineColor: #93844c;
-          OutlineSize: 0.5;
-        }
-
-        $C.@CheckBoxWithLabel #AllArmorSetting {
-          @Text = "Hide All Armor";
-          Padding: (Top: 2, Bottom: 12);
-        }
+        // Spacer
+        Group { Anchor: (Height: 16); }
 
         // Section 2: Hide Other Players' Armor
-        Label {
-          Anchor: ();
-          Style: (
-            FontSize: 16,
-            TextColor: #d4af37,
-            RenderBold: true
-          );
-          Text: "Hide Other Players' Armor";
-          Padding: (Bottom: 8, Top: 8);
-        }
+        @SectionHeader { Text: "HIDE OTHER PLAYERS' ARMOR"; }
 
-        $C.@CheckBoxWithLabel #HideOthersHelmetSetting {
-          @Text = "Hide Helmets";
-          Padding: (Bottom: 8);
-        }
+        @SettingsRow #HideOthersHelmetSetting { #Name { Text: "Hide Helmets"; } }
+        @SettingsRow #HideOthersChestSetting { #Name { Text: "Hide Chestplates"; } }
+        @SettingsRow #HideOthersGauntletsSetting { #Name { Text: "Hide Gauntlets"; } }
+        @SettingsRow #HideOthersLeggingsSetting { #Name { Text: "Hide Leggings"; } }
+      }
 
-        $C.@CheckBoxWithLabel #HideOthersChestSetting {
-          @Text = "Hide Chestplates";
-          Padding: (Bottom: 8);
-        }
+      // Right column: Allow Others
+      Group #RightColumn {
+        LayoutMode: Top;
+        FlexWeight: 1;
+        Padding: (Left: 15);
 
-        $C.@CheckBoxWithLabel #HideOthersGauntletsSetting {
-          @Text = "Hide Gauntlets";
-          Padding: (Bottom: 8);
-        }
+        // Section 3: Let Others Hide My Armor
+        @SectionHeader { Text: "LET OTHERS HIDE MY ARMOR"; }
 
-        $C.@CheckBoxWithLabel #HideOthersLeggingsSetting {
-          @Text = "Hide Leggings";
-          Padding: (Bottom: 8);
-        }
-
-        Group #HideOthersSeparator {
-          Anchor: (Top: 5, Bottom: 5, Height: 1);
-          OutlineColor: #93844c;
-          OutlineSize: 0.5;
-        }
-
-        $C.@CheckBoxWithLabel #HideOthersAllSetting {
-          @Text = "Hide All (Others)";
-          Padding: (Top: 2, Bottom: 12);
-        }
-
-        // Section 3: Allow Others to Hide My Armor
-        Label {
-          Anchor: ();
-          Style: (
-            FontSize: 16,
-            TextColor: #d4af37,
-            RenderBold: true
-          );
-          Text: "Let Others Hide My Armor";
-          Padding: (Bottom: 8, Top: 8);
-        }
-
-        $C.@CheckBoxWithLabel #AllowOthersHelmetSetting {
-          @Text = "Allow Helmet";
-          Padding: (Bottom: 8);
-        }
-
-        $C.@CheckBoxWithLabel #AllowOthersChestSetting {
-          @Text = "Allow Chestplate";
-          Padding: (Bottom: 8);
-        }
-
-        $C.@CheckBoxWithLabel #AllowOthersGauntletsSetting {
-          @Text = "Allow Gauntlets";
-          Padding: (Bottom: 8);
-        }
-
-        $C.@CheckBoxWithLabel #AllowOthersLeggingsSetting {
-          @Text = "Allow Leggings";
-          Padding: (Bottom: 8);
-        }
-
-        Group #AllowOthersSeparator {
-          Anchor: (Top: 5, Bottom: 5, Height: 1);
-          OutlineColor: #93844c;
-          OutlineSize: 0.5;
-        }
-
-        $C.@CheckBoxWithLabel #AllowOthersAllSetting {
-          @Text = "Allow All";
-          Padding: (Top: 2);
-        }
+        @SettingsRow #AllowOthersHelmetSetting { #Name { Text: "Allow Helmet"; } }
+        @SettingsRow #AllowOthersChestSetting { #Name { Text: "Allow Chestplate"; } }
+        @SettingsRow #AllowOthersGauntletsSetting { #Name { Text: "Allow Gauntlets"; } }
+        @SettingsRow #AllowOthersLeggingsSetting { #Name { Text: "Allow Leggings"; } }
       }
     }
   }

@@ -1,0 +1,23 @@
+// ArmorSlotRow.ui - Reusable checkbox row component
+// Usage: Append to a container and set #Label.Text dynamically
+
+$C = "../Common.ui";
+
+Group {
+  LayoutMode: Left;
+  Anchor: (Height: 28);
+  Padding: (Bottom: 6);
+
+  $C.@CheckBox #CheckBox {
+    Anchor: (Width: 20, Height: 20);
+  }
+
+  Label #Label {
+    Anchor: (Left: 8);
+    Style: (
+      FontSize: 14,
+      TextColor: #E0E0E0
+    );
+    Text: "";
+  }
+}

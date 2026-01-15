@@ -1,0 +1,26 @@
+// SettingsRow.ui - Hytale-styled checkbox row
+// Based on Common/Settings/LabeledCheckBoxSetting.ui
+
+$C = "../Common.ui";
+
+@Name = "Setting";
+
+Group {
+  Anchor: (Height: 44, Bottom: 8);
+  Background: #1a2533;
+  LayoutMode: Left;
+
+  Label #Name {
+    Anchor: (Left: 16);
+    Style: (VerticalAlignment: Center, TextColor: #96a9be, RenderUppercase: false, FontSize: 18);
+    Text: @Name;
+  }
+
+  Group {
+    FlexWeight: 1;
+  }
+
+  $C.@CheckBox #CheckBox {
+    Anchor: (Width: 24, Height: 24, Right: 16);
+  }
+}

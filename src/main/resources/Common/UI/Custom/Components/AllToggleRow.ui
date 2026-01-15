@@ -1,0 +1,34 @@
+// AllToggleRow.ui - "Toggle All" checkbox with distinct styling
+// Usage: Append to a container and set #Label.Text dynamically
+
+$C = "../Common.ui";
+
+Group {
+  LayoutMode: Top;
+  Padding: (Top: 4, Bottom: 8);
+
+  Group #TopSeparator {
+    Anchor: (Height: 1);
+    OutlineColor: #93844c;
+    OutlineSize: 0.5;
+  }
+
+  Group #Content {
+    LayoutMode: Left;
+    Padding: (Top: 8);
+
+    $C.@CheckBox #CheckBox {
+      Anchor: (Width: 20, Height: 20);
+    }
+
+    Label #Label {
+      Anchor: (Left: 8);
+      Style: (
+        FontSize: 14,
+        TextColor: #F2E6A0,
+        RenderBold: true
+      );
+      Text: "";
+    }
+  }
+}
