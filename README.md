@@ -1,4 +1,4 @@
-# HideArmor v0.5.0-alpha
+# HideArmor v0.6.0-alpha
 
 Advanced armor visibility control for Hytale servers with mutual opt-in system.
 

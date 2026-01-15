@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0-alpha] - 2026-01-15
+
+### Added
+
+- **Permission-Based Command Access** - Commands now support server permission configuration
+- **AbstractPlayerCommand Integration** - All commands extend `AbstractPlayerCommand` for proper permission handling
+- **README Permission Documentation** - Detailed instructions for granting command access to non-OP players
+
+### Changed
+
+- **Command Base Class** - Migrated from `CommandBase` to `AbstractPlayerCommand`:
+  - `HideArmorCommand`
+  - `HideHelmetCommand`
+  - `HideArmorUICommand`
+  - `HideHelmetDebugCommand`
+- **Execute Method Signature** - Updated to `execute(CommandContext, Store<EntityStore>, Ref<EntityStore>, PlayerRef, World)`
+
+### Technical
+
+- Permission format: `dev.nxtime.hidearmor.command.<commandname>`
+- Permissions can be granted to player groups (e.g., Adventure) via server configuration
+- Commands remain usable by OPs with `*` permission
+
+---
+
 ## [0.5.0-alpha] - 2026-01-15
 
 ### Added
