@@ -1,4 +1,4 @@
-# HideArmor v0.4.0-alpha
+# HideArmor v0.5.0-alpha
 
 Advanced armor visibility control for Hytale servers with mutual opt-in system.
 
@@ -41,7 +41,7 @@ Control each armor piece independently:
 
 ### Interactive GUI
 
-Modern checkbox-based interface with three clearly labeled sections for easy configuration.
+Modern Hytale Settings-style interface with two-column layout and checkboxes for easy configuration.
 
 ### Persistent Settings
 
@@ -136,24 +136,18 @@ Output:
 
 ## GUI Layout
 
-The interface is organized into three sections:
+The interface is organized into two columns with a Hytale Settings-style design:
 
-**Hide My Own Armor**
+**Left Column:**
 
-- Independent checkboxes for each armor slot
-- "Hide All Armor" toggle for quick control
+- **Hide My Own Armor** - Independent checkboxes for each armor slot
+- **Hide Other Players' Armor** - Choose which pieces to hide on others
 
-**Hide Other Players' Armor**
+**Right Column:**
 
-- Choose which pieces to hide on others
-- "Hide All (Others)" toggle
+- **Let Others Hide My Armor** - Grant permission for specific pieces
 
-**Let Others Hide My Armor**
-
-- Grant permission for specific pieces
-- "Allow All" toggle
-
-Each section has visual separators and labeled headers for clarity.
+Each section has dark row backgrounds with right-aligned checkboxes and uppercase section headers.
 
 ---
 
@@ -163,6 +157,55 @@ Each section has visual separators and labeled headers for clarity.
 2. Place it in your server's `plugins` folder
 3. Restart the server
 4. Configuration file `players.json` will be created automatically
+
+---
+
+## Permissions
+
+### Command Permissions
+
+Commands extend `AbstractPlayerCommand` which allows permission-based access control. The permission format follows:
+
+```
+{Group}.{Name}.command.{commandname}
+```
+
+Based on the plugin manifest (`Group: dev.nxtime`, `Name: HideArmor`), the full permission nodes are:
+
+| Command | Permission Node |
+|---------|-----------------|
+| `/hidearmor` | `dev.nxtime.hidearmor.command.hidearmor` |
+| `/hidehelmet` | `dev.nxtime.hidearmor.command.hidehelmet` |
+| `/hidearmorui` | `dev.nxtime.hidearmor.command.hidearmorui` |
+| `/hhdebug` | `dev.nxtime.hidearmor.command.hhdebug` |
+
+### Granting Permissions to Players
+
+To allow non-operator players to use these commands, add the permissions to the **Adventure** group (or your preferred player group) in your server's permission configuration.
+
+**Steps:**
+
+1. Locate your server's permission configuration
+2. Add the desired permission nodes to the player group
+3. Restart the server or reload permissions
+
+**Example** (format may vary by server):
+
+```json
+{
+  "groups": {
+    "Adventure": {
+      "permissions": [
+        "dev.nxtime.hidearmor.command.hidearmor",
+        "dev.nxtime.hidearmor.command.hidehelmet",
+        "dev.nxtime.hidearmor.command.hidearmorui"
+      ]
+    }
+  }
+}
+```
+
+**Note:** The `/hhdebug` command is intended for development purposes and should typically remain operator-only.
 
 ---
 

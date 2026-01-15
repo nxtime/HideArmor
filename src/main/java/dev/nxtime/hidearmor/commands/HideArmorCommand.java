@@ -1,9 +1,15 @@
 package dev.nxtime.hidearmor.commands;
 
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
-import com.hypixel.hytale.server.core.command.system.basecommands.CommandBase;
+import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.core.universe.world.World;
+
 import dev.nxtime.hidearmor.HideArmorState;
 import dev.nxtime.hidearmor.util.ColorConfig;
 
@@ -31,7 +37,7 @@ import java.util.Arrays;
  * @version 0.4.0
  * @see HideArmorState
  */
-public class HideArmorCommand extends CommandBase {
+public class HideArmorCommand extends AbstractPlayerCommand {
 
     /**
      * Creates the command with the specified name and description.
@@ -52,9 +58,10 @@ public class HideArmorCommand extends CommandBase {
      * @param context the command execution context containing sender and arguments
      */
     @Override
-    protected void executeSync(@Nonnull CommandContext context) {
-        var sender = context.sender();
-        if (!(sender instanceof Player player))
+    protected void execute(@Nonnull CommandContext context, @Nonnull Store<EntityStore> store,
+            @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player == null)
             return;
 
         String[] args = parseArgs(context, "hidearmor");
