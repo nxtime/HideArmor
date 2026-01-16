@@ -15,6 +15,7 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.world.World;
 import dev.nxtime.hidearmor.HideArmorState;
 // import dev.nxtime.hidearmor.commands.HideArmorTestCommand; // Uncomment for test mode
+import dev.nxtime.hidearmor.util.PluginLogger;
 
 import javax.annotation.Nonnull;
 import java.util.UUID;
@@ -201,7 +202,7 @@ public final class HideArmorPacketReceiver implements IPacketReceiver {
                             UNWRAPPED_CACHE.put(cached, eu);
                         }
                     } catch (Exception e) {
-                        dev.nxtime.hidearmor.util.PluginLogger.error("Failed to deserialize CachedPacket", e);
+                        PluginLogger.error("Failed to deserialize CachedPacket", e);
                     } finally {
                         if (buf != null) {
                             buf.release();

@@ -13,6 +13,8 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import dev.nxtime.hidearmor.HideArmorState;
 import dev.nxtime.hidearmor.util.ColorConfig;
 import dev.nxtime.hidearmor.util.CommandUtils;
+import dev.nxtime.hidearmor.gui.HideArmorGuiPage;
+import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 
 import javax.annotation.Nonnull;
 
@@ -346,7 +348,7 @@ public class HideArmorCommand extends AbstractPlayerCommand {
     /**
      * Opens the interactive armor visibility GUI for the player.
      * <p>
-     * Creates and displays a {@link dev.nxtime.hidearmor.gui.HideArmorGuiPage} with
+     * Creates and displays a {@link HideArmorGuiPage} with
      * dismissible lifetime.
      *
      * @param player the player to show the GUI to
@@ -363,8 +365,8 @@ public class HideArmorCommand extends AbstractPlayerCommand {
 
                 if (playerRefComponent != null) {
                     player.getPageManager().openCustomPage(ref, store,
-                            new dev.nxtime.hidearmor.gui.HideArmorGuiPage(playerRefComponent,
-                                    com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime.CanDismiss));
+                            new HideArmorGuiPage(playerRefComponent,
+                                    CustomPageLifetime.CanDismiss));
                 }
             });
         }

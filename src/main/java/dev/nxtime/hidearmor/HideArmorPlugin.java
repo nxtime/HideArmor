@@ -12,19 +12,24 @@ import dev.nxtime.hidearmor.commands.HideArmorCommand;
 import dev.nxtime.hidearmor.commands.HideArmorUICommand;
 import dev.nxtime.hidearmor.commands.HideHelmetCommand;
 import dev.nxtime.hidearmor.commands.HideHelmetDebugCommand;
-// import dev.nxtime.hidearmor.commands.HideArmorTestCommand; // Uncomment for test mode
 import dev.nxtime.hidearmor.gui.HideArmorGui;
 import dev.nxtime.hidearmor.net.HideArmorPacketReceiver;
 import dev.nxtime.hidearmor.util.PluginLogger;
+
+import com.hypixel.hytale.server.core.universe.world.World;
+import dev.nxtime.hidearmor.commands.HideArmorAdminCommand;
 
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -94,7 +99,7 @@ public class HideArmorPlugin extends JavaPlugin {
      * Active scheduled refresh tasks for inventory changes.
      * Used to throttle refreshes to max 1 per 50ms (1 tick).
      */
-    private final java.util.concurrent.ConcurrentHashMap<UUID, java.util.concurrent.ScheduledFuture<?>> inventoryRefreshTasks = new java.util.concurrent.ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, ScheduledFuture<?>> inventoryRefreshTasks = new ConcurrentHashMap<>();
 
     /**
      * Constructs the plugin instance.
@@ -114,15 +119,15 @@ public class HideArmorPlugin extends JavaPlugin {
      * Tracked worlds for global equipment refresh. Uses weak references to prevent
      * memory leaks.
      */
-    private final java.util.Set<com.hypixel.hytale.server.core.universe.world.World> trackedWorlds = java.util.Collections
-            .synchronizedSet(java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>()));
+    private final Set<World> trackedWorlds = Collections
+            .synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
 
     /**
      * Registers a world for tracking (called during player join events).
      *
      * @param world the world to track
      */
-    public void trackWorld(com.hypixel.hytale.server.core.universe.world.World world) {
+    public void trackWorld(World world) {
         if (world != null) {
             trackedWorlds.add(world);
         }
@@ -196,7 +201,7 @@ public class HideArmorPlugin extends JavaPlugin {
                 new HideHelmetDebugCommand("hhdebug", "Print armor slot indices"));
 
         this.getCommandRegistry().registerCommand(
-                new dev.nxtime.hidearmor.commands.HideArmorAdminCommand("hidearmoradmin", "Admin configuration menu"));
+                new HideArmorAdminCommand("hidearmoradmin", "Admin configuration menu"));
 
         // Test mode for single-player testing (disabled in production)
         // Uncomment to enable: /hidearmor test enable/disable/status/simulate
@@ -283,7 +288,7 @@ public class HideArmorPlugin extends JavaPlugin {
                         } catch (Throwable ignored) {
                         }
                     });
-                }, 50, java.util.concurrent.TimeUnit.MILLISECONDS);
+                }, 50, TimeUnit.MILLISECONDS);
                 inventoryRefreshTasks.put(uuid, task);
             }
         });

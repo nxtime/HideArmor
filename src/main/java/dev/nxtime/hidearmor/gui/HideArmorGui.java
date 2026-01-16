@@ -1,6 +1,7 @@
 package dev.nxtime.hidearmor.gui;
 
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.Message;
 import dev.nxtime.hidearmor.HideArmorState;
 
 import javax.annotation.Nonnull;
@@ -9,15 +10,21 @@ import java.util.function.BiConsumer;
 /**
  * Legacy GUI controller for the HideArmor interactive menu.
  * <p>
- * This class was created during early development to explore UI integration options.
- * It includes fallback logic for chat-based UI and experimental checkbox handling.
+ * This class was created during early development to explore UI integration
+ * options.
+ * It includes fallback logic for chat-based UI and experimental checkbox
+ * handling.
  * <p>
- * <b>Current Status:</b> This class is no longer actively used. The plugin now uses
- * {@link HideArmorGuiPage} which implements Hytale's native {@code InteractiveCustomUIPage}
+ * <b>Current Status:</b> This class is no longer actively used. The plugin now
+ * uses
+ * {@link HideArmorGuiPage} which implements Hytale's native
+ * {@code InteractiveCustomUIPage}
  * system with proper event bindings and UI asset loading.
  * <p>
- * The class is kept for reference and as a fallback in case the native UI system
- * encounters issues. The {@link #init(BiConsumer)} method is still called during
+ * The class is kept for reference and as a fallback in case the native UI
+ * system
+ * encounters issues. The {@link #init(BiConsumer)} method is still called
+ * during
  * plugin setup to initialize logging.
  *
  * @author nxtime
@@ -42,7 +49,8 @@ public class HideArmorGui {
      * logging from the GUI system. The logger is still used even though this
      * class is deprecated, as it provides diagnostic information.
      *
-     * @param logFunction callback function that accepts (level, message) for logging,
+     * @param logFunction callback function that accepts (level, message) for
+     *                    logging,
      *                    where level is "INFO", "WARNING", or "SEVERE"
      */
     public static void init(@Nonnull BiConsumer<String, String> logFunction) {
@@ -108,10 +116,11 @@ public class HideArmorGui {
      * but is no longer used. The plugin now handles events through
      * {@link HideArmorGuiPage#handleDataEvent} instead.
      * <p>
-     * If called, it would toggle the appropriate armor slot based on the checkbox ID
+     * If called, it would toggle the appropriate armor slot based on the checkbox
+     * ID
      * and trigger an equipment refresh.
      *
-     * @param player the player who clicked the checkbox
+     * @param player     the player who clicked the checkbox
      * @param checkboxId the ID of the checkbox clicked (e.g., "HelmetCheckbox")
      * @deprecated Use {@link HideArmorGuiPage#handleDataEvent} instead
      */
@@ -150,46 +159,47 @@ public class HideArmorGui {
      * integrates with Hytale's native UI system.
      *
      * @param player the player to display the UI to
-     * @param mask the player's current 12-bit visibility mask
+     * @param mask   the player's current 12-bit visibility mask
      * @deprecated Fallback no longer needed with {@link HideArmorGuiPage}
      */
     @Deprecated
     private static void sendChatFallback(Player player, int mask) {
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw(""));
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw("§6╔═══════════════════════════╗"));
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw("§6║  §e§lArmor Visibility Menu  §6║"));
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw("§6╠═══════════════════════════╣"));
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw(""));
+        player.sendMessage(Message.raw(""));
+        player.sendMessage(Message.raw("§6╔═══════════════════════════╗"));
+        player.sendMessage(Message.raw("§6║  §e§lArmor Visibility Menu  §6║"));
+        player.sendMessage(Message.raw("§6╠═══════════════════════════╣"));
+        player.sendMessage(Message.raw(""));
 
         sendCheckboxLine(player, "Helmet", HideArmorState.SLOT_HEAD, mask);
         sendCheckboxLine(player, "Chestplate", HideArmorState.SLOT_CHEST, mask);
         sendCheckboxLine(player, "Gauntlets", HideArmorState.SLOT_HANDS, mask);
         sendCheckboxLine(player, "Leggings", HideArmorState.SLOT_LEGS, mask);
 
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw(""));
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw("§6╠═══════════════════════════╣"));
+        player.sendMessage(Message.raw(""));
+        player.sendMessage(Message.raw("§6╠═══════════════════════════╣"));
 
         boolean allHidden = (mask & 0xF) == 0xF; // Only check self-armor bits (0-3)
         String allCheckbox = allHidden ? "§a[§2✓§a]" : "§7[§8 §7]";
         String allStatus = allHidden ? "§7Hidden" : "§fVisible";
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw(
+        player.sendMessage(Message.raw(
                 String.format("§6║  %s §e§lAll Armor: %s     §6║", allCheckbox, allStatus)));
 
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw("§6╚═══════════════════════════╝"));
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw(""));
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw("§7Use /hidearmor <piece> to toggle"));
+        player.sendMessage(Message.raw("§6╚═══════════════════════════╝"));
+        player.sendMessage(Message.raw(""));
+        player.sendMessage(Message.raw("§7Use /hidearmor <piece> to toggle"));
     }
 
     /**
      * Sends a formatted checkbox line for a specific armor piece.
      * <p>
-     * Part of the chat-based fallback UI. Displays a checkbox (checked or unchecked)
+     * Part of the chat-based fallback UI. Displays a checkbox (checked or
+     * unchecked)
      * alongside the armor piece name and its visibility status.
      *
      * @param player the player to send the message to
-     * @param label the armor piece name (e.g., "Helmet", "Chestplate")
-     * @param slot the armor slot index (0-3)
-     * @param mask the player's current 12-bit visibility mask
+     * @param label  the armor piece name (e.g., "Helmet", "Chestplate")
+     * @param slot   the armor slot index (0-3)
+     * @param mask   the player's current 12-bit visibility mask
      * @deprecated Part of fallback UI, no longer needed
      */
     @Deprecated
@@ -204,7 +214,7 @@ public class HideArmorGui {
         }
         line += "§6║";
 
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw(line));
+        player.sendMessage(Message.raw(line));
     }
 
     /**
@@ -223,7 +233,8 @@ public class HideArmorGui {
     }
 
     /**
-     * Forces an equipment refresh for the player to apply visual changes immediately.
+     * Forces an equipment refresh for the player to apply visual changes
+     * immediately.
      * <p>
      * Executes on the world thread to avoid concurrent modification issues.
      * Silently catches and ignores any exceptions to prevent disrupting gameplay.
