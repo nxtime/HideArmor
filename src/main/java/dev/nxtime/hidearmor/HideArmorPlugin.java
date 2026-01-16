@@ -12,19 +12,24 @@ import dev.nxtime.hidearmor.commands.HideArmorCommand;
 import dev.nxtime.hidearmor.commands.HideArmorUICommand;
 import dev.nxtime.hidearmor.commands.HideHelmetCommand;
 import dev.nxtime.hidearmor.commands.HideHelmetDebugCommand;
-// import dev.nxtime.hidearmor.commands.HideArmorTestCommand; // Uncomment for test mode
 import dev.nxtime.hidearmor.gui.HideArmorGui;
 import dev.nxtime.hidearmor.net.HideArmorPacketReceiver;
 import dev.nxtime.hidearmor.util.PluginLogger;
+
+import com.hypixel.hytale.server.core.universe.world.World;
+import dev.nxtime.hidearmor.commands.HideArmorAdminCommand;
 
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -90,7 +95,11 @@ public class HideArmorPlugin extends JavaPlugin {
      * Rate limiting for equipment invalidation per player.
      * Maps player UUID to last invalidation timestamp in milliseconds.
      */
-    private final Map<UUID, Long> lastInvalidateByPlayer = new ConcurrentHashMap<>();
+    /**
+     * Active scheduled refresh tasks for inventory changes.
+     * Used to throttle refreshes to max 1 per 50ms (1 tick).
+     */
+    private final ConcurrentHashMap<UUID, ScheduledFuture<?>> inventoryRefreshTasks = new ConcurrentHashMap<>();
 
     /**
      * Constructs the plugin instance.
@@ -106,16 +115,19 @@ public class HideArmorPlugin extends JavaPlugin {
         return instance;
     }
 
-    /** Tracked worlds for global equipment refresh. */
-    private final java.util.Set<com.hypixel.hytale.server.core.universe.world.World> trackedWorlds = java.util.Collections
-            .newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+    /**
+     * Tracked worlds for global equipment refresh. Uses weak references to prevent
+     * memory leaks.
+     */
+    private final Set<World> trackedWorlds = Collections
+            .synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
 
     /**
      * Registers a world for tracking (called during player join events).
      *
      * @param world the world to track
      */
-    public void trackWorld(com.hypixel.hytale.server.core.universe.world.World world) {
+    public void trackWorld(World world) {
         if (world != null) {
             trackedWorlds.add(world);
         }
@@ -189,7 +201,7 @@ public class HideArmorPlugin extends JavaPlugin {
                 new HideHelmetDebugCommand("hhdebug", "Print armor slot indices"));
 
         this.getCommandRegistry().registerCommand(
-                new dev.nxtime.hidearmor.commands.HideArmorAdminCommand("hidearmoradmin", "Admin configuration menu"));
+                new HideArmorAdminCommand("hidearmoradmin", "Admin configuration menu"));
 
         // Test mode for single-player testing (disabled in production)
         // Uncomment to enable: /hidearmor test enable/disable/status/simulate
@@ -241,33 +253,46 @@ public class HideArmorPlugin extends JavaPlugin {
             });
         });
 
-        // Fallback mechanism: Re-apply armor hiding whenever the inventory changes
-        // The client sometimes rehydrates armor on events like damage, repair, or item
-        // changes
-        // This event listener ensures hidden armor stays hidden by forcing a refresh
+        // Fail-safe mechanism: Ensure armor hiding persists after inventory changes
+        // (because client-side Inventory updates can override visual state).
+        // Uses a Throttled Fixed Delay strategy:
+        // - Schedules a refresh for 50ms (1 tick) later.
+        // - If a refresh is already pending/running, doesn't schedule another.
+        // This ensures the refresh happens AFTER the event (resolving race conditions)
+        // while preventing server overload during rapid inventory changes (vacuuming).
         this.getEventRegistry().registerGlobal(LivingEntityInventoryChangeEvent.class, (event) -> {
             if (!(event.getEntity() instanceof Player player))
                 return;
-            if (HideArmorState.getMask(player.getUuid()) == 0)
+
+            // Check if this player has hide settings OR if they have forced settings
+            // applied
+            int mask = HideArmorState.getMask(player.getUuid());
+            int forcedMask = HideArmorState.getForcedMask();
+            if (mask == 0 && forcedMask == 0)
                 return;
 
-            long now = System.currentTimeMillis();
-            Long last = lastInvalidateByPlayer.get(player.getUuid());
-            if (last != null && (now - last) < 10)
-                return;
-            lastInvalidateByPlayer.put(player.getUuid(), now);
-
+            UUID uuid = player.getUuid();
             var world = player.getWorld();
             if (world == null)
                 return;
 
-            world.execute(() -> {
-                try {
-                    player.invalidateEquipmentNetwork();
-                } catch (Throwable ignored) {
-                }
-            });
+            // Check if a refresh task is already pending or running
+            java.util.concurrent.ScheduledFuture<?> task = inventoryRefreshTasks.get(uuid);
+            if (task == null || task.isDone()) {
+                // Schedule a new refresh for 50ms later (1 tick)
+                // This delay ensures our "Fix" packet arrives AFTER the natural "Bad" packet
+                task = saveExecutor.schedule(() -> {
+                    world.execute(() -> {
+                        try {
+                            player.invalidateEquipmentNetwork();
+                        } catch (Throwable ignored) {
+                        }
+                    });
+                }, 50, TimeUnit.MILLISECONDS);
+                inventoryRefreshTasks.put(uuid, task);
+            }
         });
+
     }
 
     /**

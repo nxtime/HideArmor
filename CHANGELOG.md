@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.1-alpha] - 2026-01-16
+
+### Changed
+
+- **Admin UI Logic** - Simplified event handling to use explicit Button IDs.
+
+### Fixed
+
+- **Permissions Button** - Fixed ID mismatch.
+- **Ancient Worlds** - Fixed issues with lag spike on other worlds.
+
+---
+
 ## [0.7.0-alpha] - 2026-01-16
 
 ### Added

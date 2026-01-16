@@ -14,6 +14,7 @@ import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import dev.nxtime.hidearmor.HideArmorState;
+import com.hypixel.hytale.server.core.entity.entities.Player;
 
 import javax.annotation.Nonnull;
 
@@ -37,7 +38,7 @@ public class HideArmorGuiPage extends InteractiveCustomUIPage<HideArmorGuiPage.A
                 uiCommandBuilder.append("Pages/dev.nxtime_HideArmor_Menu.ui");
 
                 var player = store.getComponent(ref,
-                                com.hypixel.hytale.server.core.entity.entities.Player.getComponentType());
+                                Player.getComponentType());
                 int mask = HideArmorState.getMask(player.getUuid());
 
                 // Self armor (bits 0-3)
@@ -115,7 +116,7 @@ public class HideArmorGuiPage extends InteractiveCustomUIPage<HideArmorGuiPage.A
                 super.handleDataEvent(ref, store, data);
 
                 var player = store.getComponent(ref,
-                                com.hypixel.hytale.server.core.entity.entities.Player.getComponentType());
+                                Player.getComponentType());
 
                 if (data.button != null) {
                         switch (data.button) {

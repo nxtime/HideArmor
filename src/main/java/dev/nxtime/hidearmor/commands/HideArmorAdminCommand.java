@@ -8,6 +8,10 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
+import dev.nxtime.hidearmor.HideArmorPlugin;
+import dev.nxtime.hidearmor.gui.HideArmorAdminGuiPage;
 import dev.nxtime.hidearmor.util.CommandUtils;
 
 import javax.annotation.Nonnull;
@@ -40,12 +44,12 @@ public class HideArmorAdminCommand extends AbstractPlayerCommand {
 
         // Handle reload subcommand
         if (args.length > 0 && "reload".equalsIgnoreCase(args[0])) {
-            dev.nxtime.hidearmor.HideArmorPlugin plugin = dev.nxtime.hidearmor.HideArmorPlugin.getInstance();
+            HideArmorPlugin plugin = HideArmorPlugin.getInstance();
             if (plugin != null) {
                 plugin.reloadConfiguration();
-                playerRef.sendMessage(com.hypixel.hytale.server.core.Message.raw("Configuration reloaded from disk."));
+                playerRef.sendMessage(Message.raw("Configuration reloaded from disk."));
             } else {
-                playerRef.sendMessage(com.hypixel.hytale.server.core.Message.raw("Error: Plugin instance not found."));
+                playerRef.sendMessage(Message.raw("Error: Plugin instance not found."));
             }
             return;
         }
@@ -57,12 +61,12 @@ public class HideArmorAdminCommand extends AbstractPlayerCommand {
 
         world.execute(() -> {
             var playerRefComponent = store.getComponent(ref,
-                    com.hypixel.hytale.server.core.universe.PlayerRef.getComponentType());
+                    PlayerRef.getComponentType());
 
             if (playerRefComponent != null) {
                 player.getPageManager().openCustomPage(ref, store,
-                        new dev.nxtime.hidearmor.gui.HideArmorAdminGuiPage(playerRefComponent,
-                                com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime.CanDismiss));
+                        new HideArmorAdminGuiPage(playerRefComponent,
+                                CustomPageLifetime.CanDismiss));
             }
         });
     }

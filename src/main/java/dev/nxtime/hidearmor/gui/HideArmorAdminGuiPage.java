@@ -15,6 +15,13 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import dev.nxtime.hidearmor.HideArmorState;
 
+import dev.nxtime.hidearmor.HideArmorPlugin;
+import dev.nxtime.hidearmor.util.PermissionUtils;
+import dev.nxtime.hidearmor.util.ColorConfig;
+import dev.nxtime.hidearmor.util.PluginLogger;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.Message;
+
 import javax.annotation.Nonnull;
 
 /**
@@ -196,8 +203,9 @@ public class HideArmorAdminGuiPage extends InteractiveCustomUIPage<HideArmorAdmi
                                 if (isForced) {
                                         int newMask = currentForced ^ (1 << slotToToggle);
                                         HideArmorState.setForcedMask(newMask);
+                                        HideArmorState.setForcedMask(newMask);
                                         // Immediately refresh all players' equipment when force settings change
-                                        var plugin = dev.nxtime.hidearmor.HideArmorPlugin.getInstance();
+                                        var plugin = HideArmorPlugin.getInstance();
                                         if (plugin != null) {
                                                 plugin.refreshAllPlayersEquipment();
                                         }
@@ -217,28 +225,28 @@ public class HideArmorAdminGuiPage extends InteractiveCustomUIPage<HideArmorAdmi
          * Attempts to add HideArmor permissions to the server's permissions.json.
          */
         private void handleSetupPermissions(Store<EntityStore> store, Ref<EntityStore> ref) {
-                var plugin = dev.nxtime.hidearmor.HideArmorPlugin.getInstance();
+                var plugin = HideArmorPlugin.getInstance();
                 if (plugin == null) {
-                        dev.nxtime.hidearmor.util.PluginLogger
+                        PluginLogger
                                         .error("Plugin instance not available for permission setup");
                         return;
                 }
 
                 var dataDir = plugin.getDataDirectory();
-                var result = dev.nxtime.hidearmor.util.PermissionUtils.setupPermissions(dataDir);
+                var result = PermissionUtils.setupPermissions(dataDir);
 
                 // Send feedback to player
                 var player = store.getComponent(ref,
-                                com.hypixel.hytale.server.core.entity.entities.Player.getComponentType());
+                                Player.getComponentType());
                 if (player != null) {
                         var color = result.success
-                                        ? dev.nxtime.hidearmor.util.ColorConfig.SUCCESS
-                                        : dev.nxtime.hidearmor.util.ColorConfig.ERROR;
-                        player.sendMessage(com.hypixel.hytale.server.core.Message.join(
-                                        com.hypixel.hytale.server.core.Message
-                                                        .raw(dev.nxtime.hidearmor.util.ColorConfig.BRAND)
-                                                        .color(dev.nxtime.hidearmor.util.ColorConfig.PREFIX_COLOR),
-                                        com.hypixel.hytale.server.core.Message.raw(result.message).color(color)));
+                                        ? ColorConfig.SUCCESS
+                                        : ColorConfig.ERROR;
+                        player.sendMessage(Message.join(
+                                        Message
+                                                        .raw(ColorConfig.BRAND)
+                                                        .color(ColorConfig.PREFIX_COLOR),
+                                        Message.raw(result.message).color(color)));
                 }
         }
 
