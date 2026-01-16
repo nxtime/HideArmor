@@ -56,6 +56,7 @@ public final class HideArmorState {
     private static final ConcurrentHashMap<UUID, Integer> MASKS = new ConcurrentHashMap<>();
     private static volatile Runnable onChange;
     private static volatile int defaultMask = 0;
+    private static volatile int forcedMask = 0;
 
     /**
      * Private constructor to prevent instantiation.
@@ -102,17 +103,44 @@ public final class HideArmorState {
     }
 
     /**
+     * Retrieves the global forced mask.
+     * Bits set to 1 in this mask will ALWAYS be hidden for all players, overriding
+     * their personal settings.
+     *
+     * @return the forced 12-bit bitmask
+     */
+    public static int getForcedMask() {
+        return forcedMask;
+    }
+
+    /**
+     * Sets the global forced mask and triggers persistence.
+     *
+     * @param mask the new forced 12-bit bitmask
+     */
+    public static void setForcedMask(int mask) {
+        int clamped = Math.max(0, Math.min(4095, mask));
+        if (forcedMask != clamped) {
+            forcedMask = clamped;
+            Runnable callback = onChange;
+            if (callback != null)
+                callback.run();
+        }
+    }
+
+    /**
      * Retrieves the full 12-bit mask for a player.
      * <p>
-     * Returns the player's explicit setting if valid, otherwise returns the global
-     * default mask.
+     * Returns the player's explicit setting if valid (or default), OR'd with the
+     * global forced mask.
      *
      * @param uuid the player's UUID
-     * @return the bitmask (0-4095)
+     * @return the effective bitmask
      */
     public static int getMask(UUID uuid) {
         Integer mask = MASKS.get(uuid);
-        return mask == null ? defaultMask : mask;
+        int base = (mask == null) ? defaultMask : mask;
+        return base | forcedMask;
     }
 
     /**

@@ -11,14 +11,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Admin Configuration Menu** - New GUI for setting global defaults for new players
-- **Default Settings Management** - Admins can now configure the default state (Self/Hide Others/Allow Others) for users who haven't set preferences
-- **Command `/hidearmoradmin`** - Opens the admin configuration page (Requires `dev.nxtime.hidearmor.command.admin` permission or OP)
+- **Admin Configuration Menu** (`/hidearmoradmin`)
+  - Configure default visibility settings for new players
+  - Force override system: globally hide armor pieces regardless of player preferences
+  - Hot reload command: `/hidearmoradmin reload` to reload config without restart
+  - **Quick Setup button**: Automatically adds HideArmor permissions to `permissions.json`
+  
+- **Utility Classes** (code quality improvements)
+  - `CommandUtils` - Centralized command argument parsing
+  - `PluginLogger` - Consistent logging with `[HideArmor] [LEVEL]` format
+  - `GuiUtils` - GUI opening boilerplate reduction
+  - `PermissionUtils` - Automatic permission.json configuration
 
 ### Changed
 
-- **Persistence** - Updated save format to include global configuration alongside player data
-- **State Management** - `HideArmorState` now supports a global default mask fallback
+- **Logging System** - Replaced scattered `System.out/err` calls with `PluginLogger`
+- **Command Parsing** - Unified argument parsing across all command classes
+- **Equipment Refresh** - Force settings now apply immediately to all online players
+
+### Technical
+
+- Added `forcedMask` to `HideArmorState` for global overrides
+- Added `trackWorld()` and `refreshAllPlayersEquipment()` to `HideArmorPlugin`
+- Persistence now includes `config.defaultMask` and `config.forcedMask` in JSON
+- Updated `HideArmorAdminGuiPage` with force override UI bindings
 
 ---
 

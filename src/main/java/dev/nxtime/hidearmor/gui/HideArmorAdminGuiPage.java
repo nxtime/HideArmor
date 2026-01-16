@@ -25,137 +25,236 @@ import javax.annotation.Nonnull;
  */
 public class HideArmorAdminGuiPage extends InteractiveCustomUIPage<HideArmorAdminGuiPage.AdminGuiData> {
 
-    public HideArmorAdminGuiPage(@Nonnull PlayerRef playerRef, @Nonnull CustomPageLifetime lifetime) {
-        super(playerRef, lifetime, AdminGuiData.CODEC);
-    }
-
-    @Override
-    public void build(@Nonnull Ref<EntityStore> ref, @Nonnull UICommandBuilder uiCommandBuilder,
-            @Nonnull UIEventBuilder uiEventBuilder, @Nonnull Store<EntityStore> store) {
-        // Load the Admin UI file
-        uiCommandBuilder.append("Pages/dev.nxtime_HideArmor_AdminMenu.ui");
-
-        // Use DEFAULT mask instead of player mask
-        int mask = HideArmorState.getDefaultMask();
-
-        // Self armor (bits 0-3)
-        uiCommandBuilder.set("#HelmetSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_HEAD)) != 0);
-        uiCommandBuilder.set("#ChestSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_CHEST)) != 0);
-        uiCommandBuilder.set("#GauntletsSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_HANDS)) != 0);
-        uiCommandBuilder.set("#LeggingsSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_LEGS)) != 0);
-
-        // Hide others (bits 4-7)
-        uiCommandBuilder.set("#HideOthersHelmetSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_HIDE_OTHERS_HEAD)) != 0);
-        uiCommandBuilder.set("#HideOthersChestSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_HIDE_OTHERS_CHEST)) != 0);
-        uiCommandBuilder.set("#HideOthersGauntletsSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_HIDE_OTHERS_HANDS)) != 0);
-        uiCommandBuilder.set("#HideOthersLeggingsSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_HIDE_OTHERS_LEGS)) != 0);
-
-        // Allow others (bits 8-11)
-        uiCommandBuilder.set("#AllowOthersHelmetSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_ALLOW_OTHERS_HEAD)) != 0);
-        uiCommandBuilder.set("#AllowOthersChestSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_ALLOW_OTHERS_CHEST)) != 0);
-        uiCommandBuilder.set("#AllowOthersGauntletsSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_ALLOW_OTHERS_HANDS)) != 0);
-        uiCommandBuilder.set("#AllowOthersLeggingsSetting #CheckBox.Value",
-                (mask & (1 << HideArmorState.SLOT_ALLOW_OTHERS_LEGS)) != 0);
-
-        // Register event handlers - reused from player page since IDs are same
-        registerBindings(uiEventBuilder);
-    }
-
-    private void registerBindings(UIEventBuilder uiEventBuilder) {
-        // Self armor
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#HelmetSetting #CheckBox",
-                EventData.of("Button", "Helmet"), false);
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#ChestSetting #CheckBox",
-                EventData.of("Button", "Chest"), false);
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#GauntletsSetting #CheckBox",
-                EventData.of("Button", "Gauntlets"), false);
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#LeggingsSetting #CheckBox",
-                EventData.of("Button", "Leggings"), false);
-
-        // Hide others
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#HideOthersHelmetSetting #CheckBox",
-                EventData.of("Button", "HideOthersHelmet"), false);
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#HideOthersChestSetting #CheckBox",
-                EventData.of("Button", "HideOthersChest"), false);
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#HideOthersGauntletsSetting #CheckBox",
-                EventData.of("Button", "HideOthersGauntlets"), false);
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#HideOthersLeggingsSetting #CheckBox",
-                EventData.of("Button", "HideOthersLeggings"), false);
-
-        // Allow others
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#AllowOthersHelmetSetting #CheckBox",
-                EventData.of("Button", "AllowOthersHelmet"), false);
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#AllowOthersChestSetting #CheckBox",
-                EventData.of("Button", "AllowOthersChest"), false);
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#AllowOthersGauntletsSetting #CheckBox",
-                EventData.of("Button", "AllowOthersGauntlets"), false);
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#AllowOthersLeggingsSetting #CheckBox",
-                EventData.of("Button", "AllowOthersLeggings"), false);
-    }
-
-    @Override
-    public void handleDataEvent(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store,
-            @Nonnull AdminGuiData data) {
-        super.handleDataEvent(ref, store, data);
-
-        if (data.button != null) {
-            int currentDefault = HideArmorState.getDefaultMask();
-            int slotToToggle = -1;
-
-            switch (data.button) {
-                // Self armor
-                case "Helmet" -> slotToToggle = HideArmorState.SLOT_HEAD;
-                case "Chest" -> slotToToggle = HideArmorState.SLOT_CHEST;
-                case "Gauntlets" -> slotToToggle = HideArmorState.SLOT_HANDS;
-                case "Leggings" -> slotToToggle = HideArmorState.SLOT_LEGS;
-
-                // Hide others
-                case "HideOthersHelmet" -> slotToToggle = HideArmorState.SLOT_HIDE_OTHERS_HEAD;
-                case "HideOthersChest" -> slotToToggle = HideArmorState.SLOT_HIDE_OTHERS_CHEST;
-                case "HideOthersGauntlets" -> slotToToggle = HideArmorState.SLOT_HIDE_OTHERS_HANDS;
-                case "HideOthersLeggings" -> slotToToggle = HideArmorState.SLOT_HIDE_OTHERS_LEGS;
-
-                // Allow others
-                case "AllowOthersHelmet" -> slotToToggle = HideArmorState.SLOT_ALLOW_OTHERS_HEAD;
-                case "AllowOthersChest" -> slotToToggle = HideArmorState.SLOT_ALLOW_OTHERS_CHEST;
-                case "AllowOthersGauntlets" -> slotToToggle = HideArmorState.SLOT_ALLOW_OTHERS_HANDS;
-                case "AllowOthersLeggings" -> slotToToggle = HideArmorState.SLOT_ALLOW_OTHERS_LEGS;
-            }
-
-            if (slotToToggle != -1) {
-                int newMask = currentDefault ^ (1 << slotToToggle);
-                HideArmorState.setDefaultMask(newMask);
-            }
+        public HideArmorAdminGuiPage(@Nonnull PlayerRef playerRef, @Nonnull CustomPageLifetime lifetime) {
+                super(playerRef, lifetime, AdminGuiData.CODEC);
         }
 
-        // Update the UI to reflect new state
-        this.sendUpdate();
-    }
+        @Override
+        public void build(@Nonnull Ref<EntityStore> ref, @Nonnull UICommandBuilder uiCommandBuilder,
+                        @Nonnull UIEventBuilder uiEventBuilder, @Nonnull Store<EntityStore> store) {
+                // Load the Admin UI file
+                uiCommandBuilder.append("Pages/dev.nxtime_HideArmor_AdminMenu.ui");
 
-    /**
-     * Data model for GUI events.
-     */
-    public static class AdminGuiData {
-        static final String KEY_BUTTON = "Button";
+                // Use DEFAULT mask instead of player mask
+                int mask = HideArmorState.getDefaultMask();
 
-        public static final BuilderCodec<AdminGuiData> CODEC = BuilderCodec
-                .<AdminGuiData>builder(AdminGuiData.class, AdminGuiData::new)
-                .addField(new KeyedCodec<>(KEY_BUTTON, Codec.STRING),
-                        (data, s) -> data.button = s,
-                        data -> data.button)
-                .build();
+                // Self armor (bits 0-3)
+                uiCommandBuilder.set("#HelmetSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_HEAD)) != 0);
+                uiCommandBuilder.set("#ChestSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_CHEST)) != 0);
+                uiCommandBuilder.set("#GauntletsSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_HANDS)) != 0);
+                uiCommandBuilder.set("#LeggingsSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_LEGS)) != 0);
 
-        private String button;
-    }
+                // Hide others (bits 4-7)
+                uiCommandBuilder.set("#HideOthersHelmetSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_HIDE_OTHERS_HEAD)) != 0);
+                uiCommandBuilder.set("#HideOthersChestSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_HIDE_OTHERS_CHEST)) != 0);
+                uiCommandBuilder.set("#HideOthersGauntletsSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_HIDE_OTHERS_HANDS)) != 0);
+                uiCommandBuilder.set("#HideOthersLeggingsSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_HIDE_OTHERS_LEGS)) != 0);
+
+                // Allow others (bits 8-11)
+                uiCommandBuilder.set("#AllowOthersHelmetSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_ALLOW_OTHERS_HEAD)) != 0);
+                uiCommandBuilder.set("#AllowOthersChestSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_ALLOW_OTHERS_CHEST)) != 0);
+                uiCommandBuilder.set("#AllowOthersGauntletsSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_ALLOW_OTHERS_HANDS)) != 0);
+                uiCommandBuilder.set("#AllowOthersLeggingsSetting #CheckBox.Value",
+                                (mask & (1 << HideArmorState.SLOT_ALLOW_OTHERS_LEGS)) != 0);
+
+                // Forced settings (bits 0-3 re-used)
+                int forced = HideArmorState.getForcedMask();
+                uiCommandBuilder.set("#ForceHelmetSetting #CheckBox.Value",
+                                (forced & (1 << HideArmorState.SLOT_HEAD)) != 0);
+                uiCommandBuilder.set("#ForceChestSetting #CheckBox.Value",
+                                (forced & (1 << HideArmorState.SLOT_CHEST)) != 0);
+                uiCommandBuilder.set("#ForceGauntletsSetting #CheckBox.Value",
+                                (forced & (1 << HideArmorState.SLOT_HANDS)) != 0);
+                uiCommandBuilder.set("#ForceLeggingsSetting #CheckBox.Value",
+                                (forced & (1 << HideArmorState.SLOT_LEGS)) != 0);
+
+                // Register event handlers - reused from player page since IDs are same
+                registerBindings(uiEventBuilder);
+        }
+
+        private void registerBindings(UIEventBuilder uiEventBuilder) {
+                // Self armor
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#HelmetSetting #CheckBox",
+                                EventData.of("Button", "Helmet"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#ChestSetting #CheckBox",
+                                EventData.of("Button", "Chest"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#GauntletsSetting #CheckBox",
+                                EventData.of("Button", "Gauntlets"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#LeggingsSetting #CheckBox",
+                                EventData.of("Button", "Leggings"), false);
+
+                // Hide others
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged,
+                                "#HideOthersHelmetSetting #CheckBox",
+                                EventData.of("Button", "HideOthersHelmet"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged,
+                                "#HideOthersChestSetting #CheckBox",
+                                EventData.of("Button", "HideOthersChest"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged,
+                                "#HideOthersGauntletsSetting #CheckBox",
+                                EventData.of("Button", "HideOthersGauntlets"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged,
+                                "#HideOthersLeggingsSetting #CheckBox",
+                                EventData.of("Button", "HideOthersLeggings"), false);
+
+                // Allow others
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged,
+                                "#AllowOthersHelmetSetting #CheckBox",
+                                EventData.of("Button", "AllowOthersHelmet"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged,
+                                "#AllowOthersChestSetting #CheckBox",
+                                EventData.of("Button", "AllowOthersChest"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged,
+                                "#AllowOthersGauntletsSetting #CheckBox",
+                                EventData.of("Button", "AllowOthersGauntlets"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged,
+                                "#AllowOthersLeggingsSetting #CheckBox",
+                                EventData.of("Button", "AllowOthersLeggings"), false);
+
+                // Forced settings
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#ForceHelmetSetting #CheckBox",
+                                EventData.of("Button", "ForceHelmet"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#ForceChestSetting #CheckBox",
+                                EventData.of("Button", "ForceChest"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged,
+                                "#ForceGauntletsSetting #CheckBox",
+                                EventData.of("Button", "ForceGauntlets"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#ForceLeggingsSetting #CheckBox",
+                                EventData.of("Button", "ForceLeggings"), false);
+
+                // Setup Permissions button
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#SetupPermissionsBtn",
+                                EventData.of("Button", "SetupPermissions"), false);
+        }
+
+        @Override
+        public void handleDataEvent(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store,
+                        @Nonnull AdminGuiData data) {
+                super.handleDataEvent(ref, store, data);
+
+                if (data.button != null) {
+                        int currentDefault = HideArmorState.getDefaultMask();
+                        int currentForced = HideArmorState.getForcedMask();
+                        int slotToToggle = -1;
+                        boolean isForced = false;
+
+                        switch (data.button) {
+                                // Self armor
+                                case "Helmet" -> slotToToggle = HideArmorState.SLOT_HEAD;
+                                case "Chest" -> slotToToggle = HideArmorState.SLOT_CHEST;
+                                case "Gauntlets" -> slotToToggle = HideArmorState.SLOT_HANDS;
+                                case "Leggings" -> slotToToggle = HideArmorState.SLOT_LEGS;
+
+                                // Hide others
+                                case "HideOthersHelmet" -> slotToToggle = HideArmorState.SLOT_HIDE_OTHERS_HEAD;
+                                case "HideOthersChest" -> slotToToggle = HideArmorState.SLOT_HIDE_OTHERS_CHEST;
+                                case "HideOthersGauntlets" -> slotToToggle = HideArmorState.SLOT_HIDE_OTHERS_HANDS;
+                                case "HideOthersLeggings" -> slotToToggle = HideArmorState.SLOT_HIDE_OTHERS_LEGS;
+
+                                // Allow others
+                                case "AllowOthersHelmet" -> slotToToggle = HideArmorState.SLOT_ALLOW_OTHERS_HEAD;
+                                case "AllowOthersChest" -> slotToToggle = HideArmorState.SLOT_ALLOW_OTHERS_CHEST;
+                                case "AllowOthersGauntlets" -> slotToToggle = HideArmorState.SLOT_ALLOW_OTHERS_HANDS;
+                                case "AllowOthersLeggings" -> slotToToggle = HideArmorState.SLOT_ALLOW_OTHERS_LEGS;
+
+                                // Forced settings
+                                case "ForceHelmet" -> {
+                                        slotToToggle = HideArmorState.SLOT_HEAD;
+                                        isForced = true;
+                                }
+                                case "ForceChest" -> {
+                                        slotToToggle = HideArmorState.SLOT_CHEST;
+                                        isForced = true;
+                                }
+                                case "ForceGauntlets" -> {
+                                        slotToToggle = HideArmorState.SLOT_HANDS;
+                                        isForced = true;
+                                }
+                                case "ForceLeggings" -> {
+                                        slotToToggle = HideArmorState.SLOT_LEGS;
+                                        isForced = true;
+                                }
+                                case "SetupPermissions" -> {
+                                        // Handle permission setup button click
+                                        handleSetupPermissions(store, ref);
+                                        return; // Don't process as armor toggle
+                                }
+                        }
+
+                        if (slotToToggle != -1) {
+                                if (isForced) {
+                                        int newMask = currentForced ^ (1 << slotToToggle);
+                                        HideArmorState.setForcedMask(newMask);
+                                        // Immediately refresh all players' equipment when force settings change
+                                        var plugin = dev.nxtime.hidearmor.HideArmorPlugin.getInstance();
+                                        if (plugin != null) {
+                                                plugin.refreshAllPlayersEquipment();
+                                        }
+                                } else {
+                                        int newMask = currentDefault ^ (1 << slotToToggle);
+                                        HideArmorState.setDefaultMask(newMask);
+                                }
+                        }
+                }
+
+                // Update the UI to reflect new state
+                this.sendUpdate();
+        }
+
+        /**
+         * Handles the Setup Permissions button click.
+         * Attempts to add HideArmor permissions to the server's permissions.json.
+         */
+        private void handleSetupPermissions(Store<EntityStore> store, Ref<EntityStore> ref) {
+                var plugin = dev.nxtime.hidearmor.HideArmorPlugin.getInstance();
+                if (plugin == null) {
+                        dev.nxtime.hidearmor.util.PluginLogger
+                                        .error("Plugin instance not available for permission setup");
+                        return;
+                }
+
+                var dataDir = plugin.getDataDirectory();
+                var result = dev.nxtime.hidearmor.util.PermissionUtils.setupPermissions(dataDir);
+
+                // Send feedback to player
+                var player = store.getComponent(ref,
+                                com.hypixel.hytale.server.core.entity.entities.Player.getComponentType());
+                if (player != null) {
+                        var color = result.success
+                                        ? dev.nxtime.hidearmor.util.ColorConfig.SUCCESS
+                                        : dev.nxtime.hidearmor.util.ColorConfig.ERROR;
+                        player.sendMessage(com.hypixel.hytale.server.core.Message.join(
+                                        com.hypixel.hytale.server.core.Message
+                                                        .raw(dev.nxtime.hidearmor.util.ColorConfig.BRAND)
+                                                        .color(dev.nxtime.hidearmor.util.ColorConfig.PREFIX_COLOR),
+                                        com.hypixel.hytale.server.core.Message.raw(result.message).color(color)));
+                }
+        }
+
+        /**
+         * Data model for GUI events.
+         */
+        public static class AdminGuiData {
+                static final String KEY_BUTTON = "Button";
+
+                public static final BuilderCodec<AdminGuiData> CODEC = BuilderCodec
+                                .<AdminGuiData>builder(AdminGuiData.class, AdminGuiData::new)
+                                .addField(new KeyedCodec<>(KEY_BUTTON, Codec.STRING),
+                                                (data, s) -> data.button = s,
+                                                data -> data.button)
+                                .build();
+
+                private String button;
+        }
 }

@@ -12,9 +12,9 @@ import com.hypixel.hytale.server.core.universe.world.World;
 
 import dev.nxtime.hidearmor.HideArmorState;
 import dev.nxtime.hidearmor.util.ColorConfig;
+import dev.nxtime.hidearmor.util.CommandUtils;
 
 import javax.annotation.Nonnull;
-import java.util.Arrays;
 
 /**
  * Primary command handler for all armor visibility controls.
@@ -64,7 +64,7 @@ public class HideArmorCommand extends AbstractPlayerCommand {
         if (player == null)
             return;
 
-        String[] args = parseArgs(context, "hidearmor");
+        String[] args = CommandUtils.parseArgs(context, "hidearmor");
         if (args.length == 0) {
             // Open the GUI when no arguments provided
             openGui(player);
@@ -252,39 +252,6 @@ public class HideArmorCommand extends AbstractPlayerCommand {
             case "legs" -> HideArmorState.SLOT_LEGS;
             default -> -1;
         };
-    }
-
-    /**
-     * Parses command arguments from the context input string.
-     * <p>
-     * Strips the command name and leading slash, returning only the arguments.
-     *
-     * @param context     the command context
-     * @param commandName the command name to strip
-     * @return array of arguments, or empty array if none
-     */
-    private String[] parseArgs(CommandContext context, String commandName) {
-        String input = context.getInputString();
-        if (input == null)
-            return new String[0];
-
-        String trimmed = input.trim();
-        if (trimmed.isEmpty())
-            return new String[0];
-
-        String[] parts = trimmed.split("\\s+");
-        if (parts.length == 0)
-            return new String[0];
-
-        String first = parts[0];
-        if (first.startsWith("/"))
-            first = first.substring(1);
-
-        if (first.equalsIgnoreCase(commandName)) {
-            return parts.length > 1 ? Arrays.copyOfRange(parts, 1, parts.length) : new String[0];
-        }
-
-        return parts;
     }
 
     /**

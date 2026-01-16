@@ -30,14 +30,21 @@ $Container = "../Container.ui";
   Style: (FontSize: 16, TextColor: #96a9be, RenderUppercase: true, RenderBold: true);
 };
 
+// Primary button style for action buttons
+@SetupButtonStyle = TextButtonStyle(
+  Default: (Background: #3a7b4f, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #4a8b5f, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #2a6b3f, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
 $C.@PageOverlay {
   $C.@Container {
-    Anchor: (Width: 720, Height: 560); // Slightly taller for description
+    Anchor: (Width: 720, Height: 850); // Taller for all sections
 
     #Title {
       Group {
         $C.@Title {
-          @Text = "Default Settings Configuration";
+          @Text = "Default & Forced Settings";
         }
       }
     }
@@ -56,10 +63,10 @@ $C.@PageOverlay {
          }
       }
 
-      // Columns Wrapper
+      // Columns Wrapper for Defaults
       Group {
         LayoutMode: Left;
-        FlexWeight: 1;
+        Anchor: (Height: 420); // Fixed height for columns
         
         // Left column: Self + Hide Others
         Group #LeftColumn {
@@ -102,6 +109,62 @@ $C.@PageOverlay {
           @SettingsRow #AllowOthersLeggingsSetting { #Name { Text: "Allow Leggings"; } }
         }
       }
+
+      // Spacer
+      Group { Anchor: (Height: 35); }
+
+      // Forced Settings Section
+      @SectionHeader { Text: "GLOBAL OVERRIDES (FORCE HIDE)"; }
+      Label {
+          Text: "Settings enabled here will be FORCED ON for all players inside the server, overriding any personal preference.";
+          Style: (TextColor: #cc6666, FontSize: 14, Wrap: true); // Red warning text
+          Anchor: (Bottom: 10, Width: 680);
+      }
+
+      Group {
+        LayoutMode: Left;
+        
+        Group {
+            LayoutMode: Top;
+            FlexWeight: 1;
+            Padding: (Right: 15);
+            @SettingsRow #ForceHelmetSetting { #Name { Text: "Force Hide Helmet"; } }
+            @SettingsRow #ForceChestSetting { #Name { Text: "Force Hide Chestplate"; } }
+        }
+        Group {
+            LayoutMode: Top;
+            FlexWeight: 1;
+            Padding: (Left: 15);
+            @SettingsRow #ForceGauntletsSetting { #Name { Text: "Force Hide Gauntlets"; } }
+            @SettingsRow #ForceLeggingsSetting { #Name { Text: "Force Hide Leggings"; } }
+        }
+      }
+
+      // Spacer
+      Group { Anchor: (Height: 20); }
+
+      // Permission Setup Section
+      @SectionHeader { Text: "QUICK SETUP"; }
+      Group #PermissionSetupRow {
+        Anchor: (Height: 50);
+        LayoutMode: Left;
+        Background: #1a2533;
+
+        Label {
+          Anchor: (Left: 16);
+          Text: "Add HideArmor permissions to Adventure group";
+          Style: (VerticalAlignment: Center, TextColor: #96a9be, FontSize: 14);
+        }
+
+        Group { FlexWeight: 1; }
+
+        TextButton #SetupPermissionsBtn {
+          Text: "Setup Permissions";
+          Anchor: (Width: 160, Height: 32, Right: 14);
+          Style: @SetupButtonStyle;
+        }
+      }
+
     }
   }
 }

@@ -15,6 +15,7 @@ import dev.nxtime.hidearmor.commands.HideHelmetDebugCommand;
 // import dev.nxtime.hidearmor.commands.HideArmorTestCommand; // Uncomment for test mode
 import dev.nxtime.hidearmor.gui.HideArmorGui;
 import dev.nxtime.hidearmor.net.HideArmorPacketReceiver;
+import dev.nxtime.hidearmor.util.PluginLogger;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -29,7 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 /**
  * Main plugin class for HideArmor - advanced armor visibility control for
@@ -63,6 +63,8 @@ import java.util.logging.Level;
  */
 public class HideArmorPlugin extends JavaPlugin {
 
+    private static HideArmorPlugin instance;
+
     /** Maximum valid bitmask value (12 bits: 2^12 - 1). */
     private static final int MAX_MASK = 4095;
 
@@ -82,7 +84,7 @@ public class HideArmorPlugin extends JavaPlugin {
     private ScheduledFuture<?> pendingSave;
 
     /** Whether unsaved changes exist. */
-    private boolean dirty;
+    private volatile boolean dirty = false;
 
     /**
      * Rate limiting for equipment invalidation per player.
@@ -97,6 +99,56 @@ public class HideArmorPlugin extends JavaPlugin {
      */
     public HideArmorPlugin(@Nonnull JavaPluginInit init) {
         super(init);
+        instance = this;
+    }
+
+    public static HideArmorPlugin getInstance() {
+        return instance;
+    }
+
+    /** Tracked worlds for global equipment refresh. */
+    private final java.util.Set<com.hypixel.hytale.server.core.universe.world.World> trackedWorlds = java.util.Collections
+            .newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+
+    /**
+     * Registers a world for tracking (called during player join events).
+     *
+     * @param world the world to track
+     */
+    public void trackWorld(com.hypixel.hytale.server.core.universe.world.World world) {
+        if (world != null) {
+            trackedWorlds.add(world);
+        }
+    }
+
+    /**
+     * Refreshes equipment visibility for all online players in tracked worlds.
+     * <p>
+     * Call this when global settings (like forcedMask) change to immediately
+     * apply the new visibility rules to all players without requiring rejoin.
+     */
+    public void refreshAllPlayersEquipment() {
+        for (var world : trackedWorlds) {
+            if (world == null)
+                continue;
+
+            world.execute(() -> {
+                try {
+                    for (var player : world.getPlayers()) {
+                        if (player == null)
+                            continue;
+                        try {
+                            player.invalidateEquipmentNetwork();
+                        } catch (Throwable ignored) {
+                            // Player might have disconnected
+                        }
+                    }
+                } catch (Throwable t) {
+                    PluginLogger.debug("Failed to refresh in world: " + t.getMessage());
+                }
+            });
+        }
+        PluginLogger.debug("Triggered equipment refresh for all players.");
     }
 
     /**
@@ -115,18 +167,12 @@ public class HideArmorPlugin extends JavaPlugin {
      */
     @Override
     protected void setup() {
-        // Initialize GUI with logger
-        HideArmorGui.init((level, message) -> {
-            switch (level) {
-                case "WARNING" -> this.getLogger().at(Level.WARNING).log(message);
-                case "SEVERE" -> this.getLogger().at(Level.SEVERE).log(message);
-                default -> this.getLogger().at(Level.INFO).log(message);
-            }
-        });
+        // Initialize GUI with logger bridge
+        HideArmorGui.init(PluginLogger.createGuiBridge());
 
         initDataFile();
         int loadedCount = loadStateFromDisk();
-        this.getLogger().at(Level.INFO).log("HideHelmet enabled (self-only). Loaded " + loadedCount + " players.");
+        PluginLogger.info("Plugin enabled. Loaded %d players.", loadedCount);
         HideArmorState.setOnChange(this::markDirtyAndScheduleSave);
 
         // Commands
@@ -156,6 +202,9 @@ public class HideArmorPlugin extends JavaPlugin {
             var world = player.getWorld();
             if (world == null)
                 return;
+
+            // Track this world for global equipment refresh
+            trackWorld(world);
 
             world.execute(() -> {
                 try {
@@ -230,7 +279,7 @@ public class HideArmorPlugin extends JavaPlugin {
     @Override
     protected void shutdown() {
         int savedCount = saveStateToDisk();
-        this.getLogger().at(Level.INFO).log("HideHelmet disabled. Saved " + savedCount + " players.");
+        PluginLogger.info("Plugin disabled. Saved %d players.", savedCount);
         if (saveExecutor != null) {
             saveExecutor.shutdownNow();
         }
@@ -257,7 +306,7 @@ public class HideArmorPlugin extends JavaPlugin {
             try {
                 Files.writeString(dataFile.toPath(), "{\"players\":{}}", StandardCharsets.UTF_8);
             } catch (Exception e) {
-                System.err.println("HideHelmet: Failed to create players.json: " + e.getMessage());
+                PluginLogger.error("Failed to create players.json", e);
             }
         }
 
@@ -296,6 +345,18 @@ public class HideArmorPlugin extends JavaPlugin {
      *
      * @return the number of players successfully loaded
      */
+    /**
+     * Reloads the configuration and player states from disk.
+     * This overrides any in-memory changes that haven't been saved yet.
+     */
+    public void reloadConfiguration() {
+        if (loadStateFromDisk() > 0) {
+            PluginLogger.info("Configuration reloaded from disk.");
+        } else {
+            PluginLogger.error("Failed to reload configuration or file is empty.");
+        }
+    }
+
     private int loadStateFromDisk() {
         if (dataFile == null || !dataFile.exists())
             return 0;
@@ -327,11 +388,12 @@ public class HideArmorPlugin extends JavaPlugin {
             // Load global config
             if (model.config != null) {
                 HideArmorState.setDefaultMask(model.config.defaultMask);
+                HideArmorState.setForcedMask(model.config.forcedMask);
             }
 
             return loaded;
         } catch (Exception e) {
-            System.err.println("HideHelmet: Failed to load state: " + e.getMessage());
+            PluginLogger.error("Failed to load state", e);
             return 0;
         }
     }
@@ -375,6 +437,7 @@ public class HideArmorPlugin extends JavaPlugin {
             model.players = out;
             model.config = new GlobalConfig();
             model.config.defaultMask = HideArmorState.getDefaultMask();
+            model.config.forcedMask = HideArmorState.getForcedMask();
 
             String json = gson.toJson(model);
             Files.writeString(dataFile.toPath(), json, StandardCharsets.UTF_8);
@@ -383,7 +446,7 @@ public class HideArmorPlugin extends JavaPlugin {
             synchronized (saveLock) {
                 dirty = true;
             }
-            System.err.println("HideHelmet: Failed to save state: " + e.getMessage());
+            PluginLogger.error("Failed to save state", e);
             return 0;
         }
     }
@@ -406,5 +469,7 @@ public class HideArmorPlugin extends JavaPlugin {
     private static final class GlobalConfig {
         /** Default mask for new users or users with no explicit settings. */
         int defaultMask = 0;
+        /** Forced mask that overrides all user settings. */
+        int forcedMask = 0;
     }
 }

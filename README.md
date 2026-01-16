@@ -1,4 +1,4 @@
-# HideArmor v0.6.0-alpha
+# HideArmor v0.7.0-alpha
 
 Advanced armor visibility control for Hytale servers with mutual opt-in system.
 
@@ -187,11 +187,27 @@ Commands use `AbstractPlayerCommand` for permission-based access control. Add th
 
 _OP players with `*` permission have access by default_
 
-### _Default Settings (Admin)_
+### Admin Configuration
 
-Server administrators can use **/hidearmoradmin** to configure the default visibility state for new players.
-These settings apply to any player who has not explicitly toggled their own preferences.
-Useful for servers that want to enforce "Hide Helmet" by default, for example.
+Admins can access the global configuration menu via:
+
+```
+/hidearmoradmin
+```
+
+*(Requires permission: `dev.nxtime.hidearmor.command.admin`)_
+
+**Features:**
+
+1. **Default Settings**: Configure the default visibility settings for new players or those who haven't set preferences.
+    - _Example:_ Set "Hide Helmet" as default, so all new players join with hidden helmets.
+2. **Force Overrides**: Global settings that override ANY player preference.
+    - _Example:_ "Force Hide Helmet" will ensure NO ONE can see their helmet, regardless of their personal setting.
+3. **Hot Reload**: Reload configuration from disk without restarting the server.
+    - Command: `/hidearmoradmin reload`
+4. **Quick Setup**: Automatically adds HideArmor permissions to the Adventure group.
+    - One-click button in the admin GUI that modifies `permissions.json` for you.
+    - No need to manually edit configuration files!
 
 ### Granting Permissions to Players
 
@@ -310,6 +326,22 @@ By default, all players can use all commands. Server administrators can restrict
 ---
 
 ## Version History
+
+**v0.7.0-alpha** - Admin Configuration & Utilities
+
+- Added admin configuration menu (`/hidearmoradmin`)
+- Default settings for new players
+- Force override system (global armor hiding)
+- Hot reload command (`/hidearmoradmin reload`)
+- Created utility classes (`CommandUtils`, `PluginLogger`, `GuiUtils`)
+- Centralized logging and argument parsing
+- Real-time force settings application
+
+**v0.6.0-alpha** - Permission System
+
+- Permission-based command access
+- `AbstractPlayerCommand` integration
+- Server permission configuration support
 
 **v0.4.0-alpha** - Mutual Opt-In System
 
