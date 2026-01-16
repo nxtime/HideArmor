@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0-alpha] - 2026-01-16
+
+### Added
+
+- **Admin Configuration Menu** - New GUI for setting global defaults for new players
+- **Default Settings Management** - Admins can now configure the default state (Self/Hide Others/Allow Others) for users who haven't set preferences
+- **Command `/hidearmoradmin`** - Opens the admin configuration page (Requires `dev.nxtime.hidearmor.command.admin` permission or OP)
+
+### Changed
+
+- **Persistence** - Updated save format to include global configuration alongside player data
+- **State Management** - `HideArmorState` now supports a global default mask fallback
+
+---
+
 ## [0.6.0-alpha] - 2026-01-15
 
 ### Added

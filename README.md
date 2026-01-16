@@ -170,14 +170,28 @@ Commands extend `AbstractPlayerCommand` which allows permission-based access con
 {Group}.{Name}.command.{commandname}
 ```
 
-Based on the plugin manifest (`Group: dev.nxtime`, `Name: HideArmor`), the full permission nodes are:
+**/hidearmor status** - View full configuration status  
+**/hidearmoradmin** - **(Admin Only)** Configure default settings for new players  
+**/hidehelmet** - Quick toggle for helmet visibility
 
-| Command | Permission Node |
-|---------|-----------------|
-| `/hidearmor` | `dev.nxtime.hidearmor.command.hidearmor` |
-| `/hidehelmet` | `dev.nxtime.hidearmor.command.hidehelmet` |
-| `/hidearmorui` | `dev.nxtime.hidearmor.command.hidearmorui` |
-| `/hhdebug` | `dev.nxtime.hidearmor.command.hhdebug` |
+### _Server Permissions_
+
+Commands use `AbstractPlayerCommand` for permission-based access control. Add these to your player groups:
+
+| Permission | Command |
+|------------|---------|
+| `dev.nxtime.hidearmor.command.hidearmor` | /hidearmor |
+| `dev.nxtime.hidearmor.command.hidehelmet` | /hidehelmet |
+| `dev.nxtime.hidearmor.command.hidearmorui` | /hidearmorui |
+| `dev.nxtime.hidearmor.command.admin` | /hidearmoradmin |
+
+_OP players with `*` permission have access by default_
+
+### _Default Settings (Admin)_
+
+Server administrators can use **/hidearmoradmin** to configure the default visibility state for new players.
+These settings apply to any player who has not explicitly toggled their own preferences.
+Useful for servers that want to enforce "Hide Helmet" by default, for example.
 
 ### Granting Permissions to Players
 

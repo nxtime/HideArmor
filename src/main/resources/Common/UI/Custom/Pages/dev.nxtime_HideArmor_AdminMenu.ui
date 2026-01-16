@@ -1,0 +1,109 @@
+// HideArmor Admin Menu styled like Hytale Settings
+// Two-column layout for configuring global defaults
+
+$C = "../Common.ui";
+$Container = "../Container.ui";
+
+// Define the settings row macro
+@SettingsRow = Group {
+  Anchor: (Height: 40, Bottom: 6);
+  Background: #1a2533;
+  LayoutMode: Left;
+
+  Label #Name {
+    Anchor: (Left: 16);
+    Style: (VerticalAlignment: Center, TextColor: #96a9be, RenderUppercase: false, FontSize: 16);
+  }
+
+  Group {
+    FlexWeight: 1;
+  }
+
+  $C.@CheckBox #CheckBox {
+    Anchor: (Width: 22, Height: 22, Right: 14);
+  }
+};
+
+// Section header macro
+@SectionHeader = Label {
+  Anchor: (Bottom: 12);
+  Style: (FontSize: 16, TextColor: #96a9be, RenderUppercase: true, RenderBold: true);
+};
+
+$C.@PageOverlay {
+  $C.@Container {
+    Anchor: (Width: 720, Height: 560); // Slightly taller for description
+
+    #Title {
+      Group {
+        $C.@Title {
+          @Text = "Default Settings Configuration";
+        }
+      }
+    }
+
+    #Content {
+      LayoutMode: Top;
+      Padding: (Top: 15, Bottom: 15, Left: 20, Right: 20);
+
+      Group {
+         LayoutMode: Top;
+         Anchor: (Width: 680, Height: 40);
+         Label {
+             Text: "These settings will be applied to all new players or players who have not configured their preferences.";
+             Style: (TextColor: #e0e0e0, FontSize: 14, Wrap: true);
+             Anchor: (Bottom: 20);
+         }
+      }
+
+      // Columns Wrapper
+      Group {
+        LayoutMode: Left;
+        FlexWeight: 1;
+        
+        // Left column: Self + Hide Others
+        Group #LeftColumn {
+          LayoutMode: Top;
+          FlexWeight: 1;
+          Padding: (Right: 15);
+  
+          // Section 1: Default Self Armor
+          @SectionHeader { Text: "DEFAULT: HIDE SELF ARMOR"; }
+  
+          @SettingsRow #HelmetSetting { #Name { Text: "Hide Helmet"; } }
+          @SettingsRow #ChestSetting { #Name { Text: "Hide Chestplate"; } }
+          @SettingsRow #GauntletsSetting { #Name { Text: "Hide Gauntlets"; } }
+          @SettingsRow #LeggingsSetting { #Name { Text: "Hide Leggings"; } }
+  
+          // Spacer
+          Group { Anchor: (Height: 16); }
+  
+          // Section 2: Default Hide Others
+          @SectionHeader { Text: "DEFAULT: HIDE OTHERS"; }
+  
+          @SettingsRow #HideOthersHelmetSetting { #Name { Text: "Hide Helmets"; } }
+          @SettingsRow #HideOthersChestSetting { #Name { Text: "Hide Chestplates"; } }
+          @SettingsRow #HideOthersGauntletsSetting { #Name { Text: "Hide Gauntlets"; } }
+          @SettingsRow #HideOthersLeggingsSetting { #Name { Text: "Hide Leggings"; } }
+        }
+  
+        // Right column: Allow Others
+        Group #RightColumn {
+          LayoutMode: Top;
+          FlexWeight: 1;
+          Padding: (Left: 15);
+  
+          // Section 3: Default Let Others Hide My Armor
+          @SectionHeader { Text: "DEFAULT: ALLOW OTHERS"; }
+  
+          @SettingsRow #AllowOthersHelmetSetting { #Name { Text: "Allow Helmet"; } }
+          @SettingsRow #AllowOthersChestSetting { #Name { Text: "Allow Chestplate"; } }
+          @SettingsRow #AllowOthersGauntletsSetting { #Name { Text: "Allow Gauntlets"; } }
+          @SettingsRow #AllowOthersLeggingsSetting { #Name { Text: "Allow Leggings"; } }
+        }
+      }
+    }
+  }
+}
+
+$C.@BackButton {}

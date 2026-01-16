@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:hytalemodding.dev)"
+      "WebFetch(domain:hytalemodding.dev)",
+      "Bash(mvn clean package:*)",
+      "Bash(unzip:*)"
     ]
   }
 }

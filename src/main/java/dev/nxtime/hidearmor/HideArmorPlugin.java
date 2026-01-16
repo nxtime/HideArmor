@@ -32,23 +32,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 /**
- * Main plugin class for HideArmor - advanced armor visibility control for Hytale servers.
+ * Main plugin class for HideArmor - advanced armor visibility control for
+ * Hytale servers.
  * <p>
  * This plugin allows players to:
  * <ul>
- *   <li>Hide their own armor pieces from their view</li>
- *   <li>Hide other players' armor (with mutual opt-in)</li>
- *   <li>Control which armor pieces others can hide on them</li>
+ * <li>Hide their own armor pieces from their view</li>
+ * <li>Hide other players' armor (with mutual opt-in)</li>
+ * <li>Control which armor pieces others can hide on them</li>
  * </ul>
  * <p>
- * The plugin wraps each player's packet receiver to intercept outgoing {@code EntityUpdates}
- * packets and modify equipment data based on visibility settings. All changes are purely
+ * The plugin wraps each player's packet receiver to intercept outgoing
+ * {@code EntityUpdates}
+ * packets and modify equipment data based on visibility settings. All changes
+ * are purely
  * visual and do not affect server-side gameplay mechanics.
  * <p>
- * <b>Persistence:</b> Player settings are automatically saved to {@code players.json} with
+ * <b>Persistence:</b> Player settings are automatically saved to
+ * {@code players.json} with
  * a 1.5 second debounce to reduce disk I/O.
  * <p>
- * <b>Thread Safety:</b> Uses concurrent data structures and world-threaded execution for
+ * <b>Thread Safety:</b> Uses concurrent data structures and world-threaded
+ * execution for
  * all entity operations.
  *
  * @author nxtime
@@ -99,13 +104,13 @@ public class HideArmorPlugin extends JavaPlugin {
      * <p>
      * Initialization sequence:
      * <ol>
-     *   <li>Initialize GUI system with logging bridge</li>
-     *   <li>Create/load persistent storage file</li>
-     *   <li>Load saved player settings from disk</li>
-     *   <li>Register onChange callback for auto-save</li>
-     *   <li>Register commands</li>
-     *   <li>Install packet receivers for all players</li>
-     *   <li>Hook inventory change events for armor refresh</li>
+     * <li>Initialize GUI system with logging bridge</li>
+     * <li>Create/load persistent storage file</li>
+     * <li>Load saved player settings from disk</li>
+     * <li>Register onChange callback for auto-save</li>
+     * <li>Register commands</li>
+     * <li>Install packet receivers for all players</li>
+     * <li>Hook inventory change events for armor refresh</li>
      * </ol>
      */
     @Override
@@ -137,10 +142,13 @@ public class HideArmorPlugin extends JavaPlugin {
         this.getCommandRegistry().registerCommand(
                 new HideHelmetDebugCommand("hhdebug", "Print armor slot indices"));
 
+        this.getCommandRegistry().registerCommand(
+                new dev.nxtime.hidearmor.commands.HideArmorAdminCommand("hidearmoradmin", "Admin configuration menu"));
+
         // Test mode for single-player testing (disabled in production)
         // Uncomment to enable: /hidearmor test enable/disable/status/simulate
         // this.getCommandRegistry().registerCommand(
-        //         new HideArmorTestCommand("hidearmortest", "Test mode for single player"));
+        // new HideArmorTestCommand("hidearmortest", "Test mode for single player"));
 
         // Install packet wrapper per player when they are ready
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, (event) -> {
@@ -216,7 +224,8 @@ public class HideArmorPlugin extends JavaPlugin {
     /**
      * Cleans up resources during server shutdown.
      * <p>
-     * Performs a final save of all player settings and shuts down the save executor.
+     * Performs a final save of all player settings and shuts down the save
+     * executor.
      */
     @Override
     protected void shutdown() {
@@ -228,7 +237,8 @@ public class HideArmorPlugin extends JavaPlugin {
     }
 
     /**
-     * Initializes the data directory and creates the players.json file if it doesn't exist.
+     * Initializes the data directory and creates the players.json file if it
+     * doesn't exist.
      * <p>
      * Also creates the background executor service for debounced saves.
      */
@@ -280,7 +290,8 @@ public class HideArmorPlugin extends JavaPlugin {
     /**
      * Loads player settings from the persistent storage file.
      * <p>
-     * Reads {@code players.json}, validates all entries, and populates {@link HideArmorState}
+     * Reads {@code players.json}, validates all entries, and populates
+     * {@link HideArmorState}
      * silently (without triggering save callbacks). Invalid entries are skipped.
      *
      * @return the number of players successfully loaded
@@ -312,6 +323,12 @@ public class HideArmorPlugin extends JavaPlugin {
                 } catch (IllegalArgumentException ignored) {
                 }
             }
+
+            // Load global config
+            if (model.config != null) {
+                HideArmorState.setDefaultMask(model.config.defaultMask);
+            }
+
             return loaded;
         } catch (Exception e) {
             System.err.println("HideHelmet: Failed to load state: " + e.getMessage());
@@ -322,7 +339,8 @@ public class HideArmorPlugin extends JavaPlugin {
     /**
      * Saves all player settings to the persistent storage file.
      * <p>
-     * Creates a snapshot of current state, filters out invalid/zero masks, serializes
+     * Creates a snapshot of current state, filters out invalid/zero masks,
+     * serializes
      * to JSON, and writes to disk. Only saves if dirty flag is set.
      * <p>
      * If save fails, re-marks state as dirty for retry on next trigger.
@@ -355,6 +373,8 @@ public class HideArmorPlugin extends JavaPlugin {
 
             SaveModel model = new SaveModel();
             model.players = out;
+            model.config = new GlobalConfig();
+            model.config.defaultMask = HideArmorState.getDefaultMask();
 
             String json = gson.toJson(model);
             Files.writeString(dataFile.toPath(), json, StandardCharsets.UTF_8);
@@ -376,5 +396,15 @@ public class HideArmorPlugin extends JavaPlugin {
     private static final class SaveModel {
         /** Map of player UUID strings to their 12-bit mask values. */
         Map<String, Integer> players = new HashMap<>();
+        /** Global configuration settings. */
+        GlobalConfig config = new GlobalConfig();
+    }
+
+    /**
+     * Global configuration settings.
+     */
+    private static final class GlobalConfig {
+        /** Default mask for new users or users with no explicit settings. */
+        int defaultMask = 0;
     }
 }
