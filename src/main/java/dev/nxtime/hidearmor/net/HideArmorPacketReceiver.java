@@ -1,44 +1,60 @@
 package dev.nxtime.hidearmor.net;
 
 import com.hypixel.hytale.protocol.Packet;
+import com.hypixel.hytale.protocol.CachedPacket;
 import com.hypixel.hytale.protocol.ComponentUpdate;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import com.hypixel.hytale.protocol.ComponentUpdateType;
 import com.hypixel.hytale.protocol.EntityUpdate;
 import com.hypixel.hytale.protocol.Equipment;
 import com.hypixel.hytale.protocol.packets.entities.EntityUpdates;
 import com.hypixel.hytale.server.core.receiver.IPacketReceiver;
 
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.universe.world.World;
 import dev.nxtime.hidearmor.HideArmorState;
 // import dev.nxtime.hidearmor.commands.HideArmorTestCommand; // Uncomment for test mode
 
 import javax.annotation.Nonnull;
 import java.util.UUID;
+
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.Collections;
 
 /**
  * Intercepts outgoing packets sent to the client to hide armor pieces visually.
  * <p>
- * This packet receiver wraps the default packet receiver for a player (viewer) and
- * modifies {@code EntityUpdates} packets before they reach the client. It processes
+ * This packet receiver wraps the default packet receiver for a player (viewer)
+ * and
+ * modifies {@code EntityUpdates} packets before they reach the client. It
+ * processes
+ * equipment updates for:
  * equipment updates for:
  * <ul>
- *   <li><b>Self armor:</b> Hides the viewer's own armor based on their self-armor settings</li>
- *   <li><b>Other players' armor:</b> Hides armor on other players using mutual opt-in logic</li>
+ * <li><b>Self armor:</b> Hides the viewer's own armor based on their self-armor
+ * settings</li>
+ * <li><b>Other players' armor:</b> Hides armor on other players using mutual
+ * opt-in logic</li>
  * </ul>
  * <p>
  * The mutual opt-in system requires both:
  * <ol>
- *   <li>Viewer has "hide others" enabled for that armor slot</li>
- *   <li>Target player has "allow others" enabled for that armor slot</li>
+ * <li>Viewer has "hide others" enabled for that armor slot</li>
+ * <li>Target player has "allow others" enabled for that armor slot</li>
  * </ol>
  * <p>
- * This is purely a visual modification. Server-side inventory, stats, durability,
+ * This is purely a visual modification. Server-side inventory, stats,
+ * durability,
  * and combat calculations are completely unaffected.
  * <p>
  * <b>Performance:</b> Uses caching to minimize entity UUID lookups. Early exits
  * when no settings are configured for the viewer.
  * <p>
- * <b>Thread-safety:</b> Safe for concurrent packet processing. Uses {@link ConcurrentHashMap}
+ * <b>Thread-safety:</b> Safe for concurrent packet processing. Uses
+ * {@link ConcurrentHashMap}
  * for entity UUID caching.
  *
  * @author nxtime
@@ -56,7 +72,10 @@ public final class HideArmorPacketReceiver implements IPacketReceiver {
     /** The network ID of the viewer's own entity. */
     private final int selfNetworkId;
 
-    /** The world instance for entity lookups. Stored as Object for SDK compatibility. */
+    /**
+     * The world instance for entity lookups. Stored as Object for SDK
+     * compatibility.
+     */
     private final Object world;
 
     /**
@@ -66,12 +85,27 @@ public final class HideArmorPacketReceiver implements IPacketReceiver {
     private final ConcurrentHashMap<Integer, UUID> networkIdCache = new ConcurrentHashMap<>();
 
     /**
+     * Global cache for unwrapped EntityUpdates from CachedPackets.
+     * Uses WeakHashMap so entries are cleared when the server finishes broadcasting
+     * the packet.
+     * Prevents O(N) deserialization overhead.
+     */
+    private static final Map<CachedPacket<?>, EntityUpdates> UNWRAPPED_CACHE = Collections
+            .synchronizedMap(new WeakHashMap<>());
+
+    /**
+     * Sentinel UUID for negative caching (non-player entities).
+     */
+    private static final UUID NULL_UUID = new UUID(0, 0);
+
+    /**
      * Creates a new packet receiver wrapper for a specific player.
      *
-     * @param delegate the original packet receiver to wrap
-     * @param viewerUuid the UUID of the player who will receive these packets
+     * @param delegate      the original packet receiver to wrap
+     * @param viewerUuid    the UUID of the player who will receive these packets
      * @param selfNetworkId the network ID of the viewer's own entity
-     * @param world the world instance for entity lookups (uses Object type for SDK compatibility)
+     * @param world         the world instance for entity lookups (uses Object type
+     *                      for SDK compatibility)
      */
     public HideArmorPacketReceiver(IPacketReceiver delegate, UUID viewerUuid, int selfNetworkId, Object world) {
         this.delegate = delegate;
@@ -83,20 +117,28 @@ public final class HideArmorPacketReceiver implements IPacketReceiver {
     /**
      * Writes a packet to the client, potentially modifying equipment data first.
      * <p>
-     * If the packet is an {@code EntityUpdates} packet containing equipment information,
+     * If the packet is an {@code EntityUpdates} packet containing equipment
+     * information,
      * armor IDs may be replaced with empty strings based on visibility settings.
      *
      * @param packet the packet to send
      */
     @Override
     public void write(@Nonnull Packet packet) {
+        // Temporary debug: Log packet types to find what's leaking armor
+        // if (packet.getClass().getSimpleName().contains("Update")) {
+        // dev.nxtime.hidearmor.util.PluginLogger.debug("Sending packet: " +
+        // packet.getClass().getSimpleName());
+        // }
         delegate.write(maybeModify(packet));
     }
 
     /**
-     * Writes a packet to the client without caching, potentially modifying equipment data first.
+     * Writes a packet to the client without caching, potentially modifying
+     * equipment data first.
      * <p>
-     * Behaves identically to {@link #write(Packet)} but uses the no-cache write path.
+     * Behaves identically to {@link #write(Packet)} but uses the no-cache write
+     * path.
      *
      * @param packet the packet to send
      */
@@ -106,31 +148,79 @@ public final class HideArmorPacketReceiver implements IPacketReceiver {
     }
 
     /**
-     * Potentially modifies a packet to hide armor pieces based on visibility settings.
+     * Potentially modifies a packet to hide armor pieces based on visibility
+     * settings.
      * <p>
      * This method performs several optimizations:
      * <ul>
-     *   <li>Early exit if viewer has no settings configured (mask == 0)</li>
-     *   <li>Only processes {@code EntityUpdates} packets</li>
-     *   <li>Only modifies equipment components</li>
-     *   <li>Uses lazy copying to avoid cloning unchanged packets</li>
+     * <li>Early exit if viewer has no settings configured (mask == 0)</li>
+     * <li>Only processes {@code EntityUpdates} packets</li>
+     * <li>Only modifies equipment components</li>
+     * <li>Uses lazy copying to avoid cloning unchanged packets</li>
      * </ul>
      * <p>
      * The actual hiding logic depends on whether the entity is the viewer's own:
      * <ul>
-     *   <li><b>Self:</b> Uses self-armor settings (bits 0-3)</li>
-     *   <li><b>Others:</b> Uses mutual opt-in (hide-others bits AND allow-others bits)</li>
+     * <li><b>Self:</b> Uses self-armor settings (bits 0-3)</li>
+     * <li><b>Others:</b> Uses mutual opt-in (hide-others bits AND allow-others
+     * bits)</li>
      * </ul>
      *
      * @param packet the original packet from the server
-     * @return the modified packet with hidden armor, or the original if no modifications needed
+     * @return the modified packet with hidden armor, or the original if no
+     *         modifications needed
      */
     private Packet maybeModify(Packet packet) {
         int mask = HideArmorState.getMask(viewerUuid);
 
-        // Early return: If no settings enabled for this viewer, pass packet through unchanged
+        // Early return: If no settings enabled for this viewer, pass packet through
+        // unchanged
         if (mask == 0)
             return packet;
+
+        // Handle CachedPacket unwrapping for EntityUpdates (Packet ID 161)
+        // This ensures broadcasted packets (like global equipment updates) are properly
+        // filtered
+        // OPTIMIZED: Uses global cache to avoid deserializing the same packet N times
+        if (packet instanceof CachedPacket) {
+            CachedPacket<?> cached = (CachedPacket<?>) packet;
+            if (cached.getId() == EntityUpdates.PACKET_ID) {
+                // Try to get from cache first
+                EntityUpdates eu = UNWRAPPED_CACHE.get(cached);
+
+                if (eu == null) {
+                    // Cache miss: Deserialize
+                    ByteBuf buf = null;
+                    try {
+                        buf = Unpooled.buffer(cached.getCachedSize());
+                        cached.serialize(buf);
+                        eu = EntityUpdates.deserialize(buf, 0);
+
+                        // Cache the result
+                        if (eu != null) {
+                            UNWRAPPED_CACHE.put(cached, eu);
+                        }
+                    } catch (Exception e) {
+                        dev.nxtime.hidearmor.util.PluginLogger.error("Failed to deserialize CachedPacket", e);
+                    } finally {
+                        if (buf != null) {
+                            buf.release();
+                        }
+                    }
+                }
+
+                // If we have a valid EntityUpdates (from cache or fresh), process it
+                if (eu != null) {
+                    Packet modified = maybeModify(eu);
+                    // If modified, return the raw modified packet (breaks cache for this viewer)
+                    if (modified != eu) {
+                        return modified;
+                    }
+                }
+            }
+            // If not EntityUpdates or not modified, return original cached packet
+            return packet;
+        }
 
         // Only process EntityUpdates packets (which contain equipment data)
         if (!(packet instanceof EntityUpdates eu))
@@ -229,26 +319,8 @@ public final class HideArmorPacketReceiver implements IPacketReceiver {
                         updatesCopy[i] = updCopy;
                     }
 
-                    // Clone the ComponentUpdate to modify equipment safely
-                    ComponentUpdate cuCopy = new ComponentUpdate();
-                    cuCopy.type = cu.type;
-
-                    // Deep clone the Equipment object to preserve hand items while modifying armor
-                    Equipment eqCopy = new Equipment();
-                    eqCopy.rightHandItemId = cu.equipment.rightHandItemId;
-                    eqCopy.leftHandItemId = cu.equipment.leftHandItemId;
-
-                    // Clone armor IDs and replace hidden slots with empty strings
-                    eqCopy.armorIds = armorIds.clone();
-                    for (int slot : slots) {
-                        if (hideSlots[slot] && slot >= 0 && slot < eqCopy.armorIds.length) {
-                            eqCopy.armorIds[slot] = ""; // Empty string hides the armor piece visually
-                        }
-                    }
-
-                    // Reassemble the modified component update
-                    cuCopy.equipment = eqCopy;
-                    updCopy.updates[j] = cuCopy;
+                    // Use helper method to create modified component with hidden armor
+                    updCopy.updates[j] = createHiddenComponentUpdate(cu, hideSlots);
                 }
             }
         }
@@ -265,6 +337,41 @@ public final class HideArmorPacketReceiver implements IPacketReceiver {
     }
 
     /**
+     * Creates a modified copy of a component update with non-visible slots cleared.
+     * <p>
+     * Deep clones the Equipment component to handle packet-shared data safely.
+     *
+     * @param original  The original component update
+     * @param hideSlots Boolean array where true indicates the slot should be hidden
+     * @return A new ComponentUpdate with hidden armor slots
+     */
+    private ComponentUpdate createHiddenComponentUpdate(ComponentUpdate original, boolean[] hideSlots) {
+        ComponentUpdate copy = new ComponentUpdate();
+        copy.type = original.type;
+
+        Equipment originalEq = original.equipment;
+        if (originalEq == null) {
+            return copy; // Should not happen given caller checks, but safe
+        }
+        Equipment newEq = new Equipment();
+        // Preserving hand items is crucial as we only want to hide armor
+        newEq.rightHandItemId = originalEq.rightHandItemId;
+        newEq.leftHandItemId = originalEq.leftHandItemId;
+
+        if (originalEq.armorIds != null) {
+            newEq.armorIds = originalEq.armorIds.clone();
+            for (int i = 0; i < newEq.armorIds.length; i++) {
+                if (i < hideSlots.length && hideSlots[i]) {
+                    newEq.armorIds[i] = ""; // Hide slot by setting ID to empty string
+                }
+            }
+        }
+
+        copy.equipment = newEq;
+        return copy;
+    }
+
+    /**
      * Resolve a networkId to a player UUID.
      * Uses caching to avoid repeated entity store queries.
      *
@@ -274,31 +381,26 @@ public final class HideArmorPacketReceiver implements IPacketReceiver {
     private UUID resolveEntityUuid(int networkId) {
         // Check cache first
         UUID cached = networkIdCache.get(networkId);
-        if (cached != null)
-            return cached;
+        if (cached != null) {
+            return cached.equals(NULL_UUID) ? null : cached;
+        }
 
-        // Query world using reflection to avoid type dependency
-        try {
-            var worldClass = world.getClass();
-            var getPlayersMethod = worldClass.getMethod("getPlayers");
-            var players = (Iterable<?>) getPlayersMethod.invoke(world);
-
-            for (Object playerObj : players) {
-                var playerClass = playerObj.getClass();
-                var getNetworkIdMethod = playerClass.getMethod("getNetworkId");
-                var getUuidMethod = playerClass.getMethod("getUuid");
-
-                int playerId = (int) getNetworkIdMethod.invoke(playerObj);
-                if (playerId == networkId) {
-                    UUID uuid = (UUID) getUuidMethod.invoke(playerObj);
-                    networkIdCache.put(networkId, uuid); // Cache the result
+        // Optimized lookup avoiding reflection
+        if (world instanceof World) {
+            World w = (World) world;
+            for (Player player : w.getPlayers()) {
+                if (player != null && player.getNetworkId() == networkId) {
+                    @SuppressWarnings("deprecation")
+                    UUID uuid = player.getUuid();
+                    networkIdCache.put(networkId, uuid); // Positive cache
                     return uuid;
                 }
             }
-        } catch (Throwable t) {
-            // Silently fail to avoid breaking packet processing
         }
 
-        return null; // Not a player entity or couldn't resolve
+        // Cache failure (negative result) to prevent repeated lookups for non-player
+        // entities
+        networkIdCache.put(networkId, NULL_UUID);
+        return null;
     }
 }

@@ -90,7 +90,11 @@ public class HideArmorPlugin extends JavaPlugin {
      * Rate limiting for equipment invalidation per player.
      * Maps player UUID to last invalidation timestamp in milliseconds.
      */
-    private final Map<UUID, Long> lastInvalidateByPlayer = new ConcurrentHashMap<>();
+    /**
+     * Active scheduled refresh tasks for inventory changes.
+     * Used to throttle refreshes to max 1 per 50ms (1 tick).
+     */
+    private final java.util.concurrent.ConcurrentHashMap<UUID, java.util.concurrent.ScheduledFuture<?>> inventoryRefreshTasks = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * Constructs the plugin instance.
@@ -106,9 +110,12 @@ public class HideArmorPlugin extends JavaPlugin {
         return instance;
     }
 
-    /** Tracked worlds for global equipment refresh. */
+    /**
+     * Tracked worlds for global equipment refresh. Uses weak references to prevent
+     * memory leaks.
+     */
     private final java.util.Set<com.hypixel.hytale.server.core.universe.world.World> trackedWorlds = java.util.Collections
-            .newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+            .synchronizedSet(java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>()));
 
     /**
      * Registers a world for tracking (called during player join events).
@@ -241,33 +248,46 @@ public class HideArmorPlugin extends JavaPlugin {
             });
         });
 
-        // Fallback mechanism: Re-apply armor hiding whenever the inventory changes
-        // The client sometimes rehydrates armor on events like damage, repair, or item
-        // changes
-        // This event listener ensures hidden armor stays hidden by forcing a refresh
+        // Fail-safe mechanism: Ensure armor hiding persists after inventory changes
+        // (because client-side Inventory updates can override visual state).
+        // Uses a Throttled Fixed Delay strategy:
+        // - Schedules a refresh for 50ms (1 tick) later.
+        // - If a refresh is already pending/running, doesn't schedule another.
+        // This ensures the refresh happens AFTER the event (resolving race conditions)
+        // while preventing server overload during rapid inventory changes (vacuuming).
         this.getEventRegistry().registerGlobal(LivingEntityInventoryChangeEvent.class, (event) -> {
             if (!(event.getEntity() instanceof Player player))
                 return;
-            if (HideArmorState.getMask(player.getUuid()) == 0)
+
+            // Check if this player has hide settings OR if they have forced settings
+            // applied
+            int mask = HideArmorState.getMask(player.getUuid());
+            int forcedMask = HideArmorState.getForcedMask();
+            if (mask == 0 && forcedMask == 0)
                 return;
 
-            long now = System.currentTimeMillis();
-            Long last = lastInvalidateByPlayer.get(player.getUuid());
-            if (last != null && (now - last) < 10)
-                return;
-            lastInvalidateByPlayer.put(player.getUuid(), now);
-
+            UUID uuid = player.getUuid();
             var world = player.getWorld();
             if (world == null)
                 return;
 
-            world.execute(() -> {
-                try {
-                    player.invalidateEquipmentNetwork();
-                } catch (Throwable ignored) {
-                }
-            });
+            // Check if a refresh task is already pending or running
+            java.util.concurrent.ScheduledFuture<?> task = inventoryRefreshTasks.get(uuid);
+            if (task == null || task.isDone()) {
+                // Schedule a new refresh for 50ms later (1 tick)
+                // This delay ensures our "Fix" packet arrives AFTER the natural "Bad" packet
+                task = saveExecutor.schedule(() -> {
+                    world.execute(() -> {
+                        try {
+                            player.invalidateEquipmentNetwork();
+                        } catch (Throwable ignored) {
+                        }
+                    });
+                }, 50, java.util.concurrent.TimeUnit.MILLISECONDS);
+                inventoryRefreshTasks.put(uuid, task);
+            }
         });
+
     }
 
     /**
