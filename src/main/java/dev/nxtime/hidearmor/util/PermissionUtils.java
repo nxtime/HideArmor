@@ -66,6 +66,12 @@ public final class PermissionUtils {
      * @return SetupResult indicating success/failure and details
      */
     public static SetupResult setupPermissions(Path serverDataDir) {
+        // Check if LuckPerms is available - skip permissions.json modification
+        if (LuckPermsIntegration.isLuckPermsAvailable()) {
+            return new SetupResult(true,
+                    "LuckPerms detected - permissions managed via /lp commands", 0);
+        }
+
         if (serverDataDir == null) {
             PluginLogger.debug("Data directory is null");
             return new SetupResult(false, "Plugin data directory not available", 0);

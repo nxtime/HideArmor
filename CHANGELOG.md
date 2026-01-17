@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.7.1-alpha] - 2026-01-16
+## [0.7.2-alpha] - 2026-01-17
+
+### Added
+
+- **Integration**: Supported "Miners Helmet" mod items (exempt from hiding to preserve light source).
+- **Integration**: Added LuckPerms detection - skips `permissions.json` when LP is installed.
+- **Integration**: Added Better Modlist support with mod logo.
+- **Config**: Added `refreshDelayMs` setting (10-1000ms) to reduce flickering during inventory changes.
 
 ### Changed
 
@@ -17,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Permissions Button** - Fixed ID mismatch.
 - **Ancient Worlds** - Fixed issues with lag spike on other worlds.
+- **Permission Enforcement** - Commands now require proper permissions (works with LuckPerms).
 
 ---
 

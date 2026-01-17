@@ -24,6 +24,7 @@ public class HideHelmetCommand extends AbstractPlayerCommand {
 
     public HideHelmetCommand(String name, String description) {
         super(name, description);
+        requirePermission("dev.nxtime.hidearmor.command.hidehelmet");
     }
 
     @Override

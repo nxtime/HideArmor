@@ -1,4 +1,4 @@
-# HideArmor v0.7.0-alpha
+# HideArmor v0.7.2-alpha
 
 Advanced armor visibility control for Hytale servers with mutual opt-in system.
 
@@ -160,34 +160,138 @@ Each section has dark row backgrounds with right-aligned checkboxes and uppercas
 
 ---
 
+## Configuration
+
+Settings are stored in `plugins/HideArmor/players.json`:
+
+```json
+{
+  "players": { ... },
+  "config": {
+    "defaultMask": 0,
+    "forcedMask": 0,
+    "refreshDelayMs": 50
+  }
+}
+```
+
+| Setting | Default | Range | Description |
+|---------|---------|-------|-------------|
+| `defaultMask` | `0` | 0-4095 | Default armor visibility for new players |
+| `forcedMask` | `0` | 0-4095 | Force hide settings (overrides player preferences) |
+| `refreshDelayMs` | `50` | 10-1000 | Delay (ms) before refreshing armor after inventory changes |
+
+> **Tip:** Increase `refreshDelayMs` to reduce flickering during fast inventory operations. Default is 50ms (1 tick).
+
+---
+
 ## Permissions
 
-### Command Permissions
+### Permission Nodes
 
-Commands extend `AbstractPlayerCommand` which allows permission-based access control. The permission format follows:
+| Permission | Command | Description |
+|------------|---------|-------------|
+| `dev.nxtime.hidearmor.command.hidearmor` | `/hidearmor` | Main armor visibility command |
+| `dev.nxtime.hidearmor.command.hidehelmet` | `/hidehelmet` | Quick helmet toggle |
+| `dev.nxtime.hidearmor.command.hidearmoradmin` | `/hidearmoradmin` | Admin configuration (admin only) |
+| `dev.nxtime.hidearmor.command.debug` | `/hhdebug` | Debug command (admin only) |
 
+> **Note:** OP players with `*` permission have access to all commands by default.
+
+---
+
+## LuckPerms Integration
+
+HideArmor automatically detects if [LuckPerms](https://luckperms.net/) is installed and uses it for permission management.
+
+### With LuckPerms Installed
+
+When LuckPerms is present:
+
+- The plugin skips modifying `permissions.json`
+- All permission checks use LuckPerms API
+- Manage permissions via `/lp` commands
+
+### Granting Permissions (LuckPerms)
+
+**Grant to a group:**
+
+```bash
+# Player commands (for regular players)
+/lp group default permission set dev.nxtime.hidearmor.command.hidearmor true
+/lp group default permission set dev.nxtime.hidearmor.command.hidehelmet true
+/lp group default permission set dev.nxtime.hidearmor.command.hidearmorui true
+
+# Admin commands (for admin group only)
+/lp group admin permission set dev.nxtime.hidearmor.command.hidearmoradmin true
+/lp group admin permission set dev.nxtime.hidearmor.command.debug true
 ```
-{Group}.{Name}.command.{commandname}
+
+**Grant to a specific player:**
+
+```bash
+/lp user <username> permission set dev.nxtime.hidearmor.command.hidearmor true
 ```
 
-**/hidearmor status** - View full configuration status  
-**/hidearmoradmin** - **(Admin Only)** Configure default settings for new players  
-**/hidehelmet** - Quick toggle for helmet visibility
+### Deny by Default (Recommended)
 
-### _Server Permissions_
+For security, explicitly deny permissions for the default group:
 
-Commands use `AbstractPlayerCommand` for permission-based access control. Add these to your player groups:
+```bash
+# Deny all HideArmor commands by default
+/lp group default permission set dev.nxtime.hidearmor.command.hidearmor false
+/lp group default permission set dev.nxtime.hidearmor.command.hidehelmet false
+/lp group default permission set dev.nxtime.hidearmor.command.hidearmorui false
+/lp group default permission set dev.nxtime.hidearmor.command.hidearmoradmin false
+```
 
-| Permission | Command |
-|------------|---------|
-| `dev.nxtime.hidearmor.command.hidearmor` | /hidearmor |
-| `dev.nxtime.hidearmor.command.hidehelmet` | /hidehelmet |
-| `dev.nxtime.hidearmor.command.hidearmorui` | /hidearmorui |
-| `dev.nxtime.hidearmor.command.admin` | /hidearmoradmin |
+Then grant to specific groups that should have access:
 
-_OP players with `*` permission have access by default_
+```bash
+/lp group member permission set dev.nxtime.hidearmor.command.hidearmor true
+```
 
-### Admin Configuration
+### Checking Permissions
+
+```bash
+/lp user <username> permission info dev.nxtime.hidearmor.command.hidearmor
+/lp group <groupname> permission info
+```
+
+---
+
+## Without LuckPerms (Native Permissions)
+
+If LuckPerms is not installed, permissions are managed via the server's `permissions.json` file.
+
+### Quick Setup (Admin GUI)
+
+1. Run `/hidearmoradmin`
+2. Click **"Setup Permissions"** button
+3. This automatically adds HideArmor permissions to the **Adventure** group
+
+### Manual Setup
+
+Edit your server's `permissions.json`:
+
+```json
+{
+  "groups": {
+    "Adventure": [
+      "dev.nxtime.hidearmor.command.hidearmor",
+      "dev.nxtime.hidearmor.command.hidehelmet",
+      "dev.nxtime.hidearmor.command.hidearmorui"
+    ],
+    "OP": [
+      "*"
+    ]
+  }
+}
+```
+
+---
+
+## Admin Configuration
 
 Admins can access the global configuration menu via:
 
@@ -195,47 +299,16 @@ Admins can access the global configuration menu via:
 /hidearmoradmin
 ```
 
-*(Requires permission: `dev.nxtime.hidearmor.command.admin`)_
+*(Requires permission: `dev.nxtime.hidearmor.command.hidearmoradmin`)*
 
 **Features:**
 
 1. **Default Settings**: Configure the default visibility settings for new players or those who haven't set preferences.
-    - _Example:_ Set "Hide Helmet" as default, so all new players join with hidden helmets.
+    - *Example:* Set "Hide Helmet" as default, so all new players join with hidden helmets.
 2. **Force Overrides**: Global settings that override ANY player preference.
-    - _Example:_ "Force Hide Helmet" will ensure NO ONE can see their helmet, regardless of their personal setting.
+    - *Example:* "Force Hide Helmet" will ensure NO ONE can see their helmet, regardless of their personal setting.
 3. **Hot Reload**: Reload configuration from disk without restarting the server.
     - Command: `/hidearmoradmin reload`
-4. **Quick Setup**: Automatically adds HideArmor permissions to the Adventure group.
-    - One-click button in the admin GUI that modifies `permissions.json` for you.
-    - No need to manually edit configuration files!
-
-### Granting Permissions to Players
-
-To allow non-operator players to use these commands, add the permissions to the **Adventure** group (or your preferred player group) in your server's permission configuration.
-
-**Steps:**
-
-1. Locate your server's permission configuration
-2. Add the desired permission nodes to the player group
-3. Restart the server or reload permissions
-
-**Example** (format may vary by server):
-
-```json
-{
-  "groups": {
-    "Adventure": {
-      "permissions": [
-        "dev.nxtime.hidearmor.command.hidearmor",
-        "dev.nxtime.hidearmor.command.hidehelmet",
-        "dev.nxtime.hidearmor.command.hidearmorui"
-      ]
-    }
-  }
-}
-```
-
-**Note:** The `/hhdebug` command is intended for development purposes and should typically remain operator-only.
 
 ---
 
@@ -294,12 +367,6 @@ Settings are automatically saved with a 1.5 second debounce to reduce disk I/O.
 **Hytale Version:** Early Access SDK
 **Server Type:** Hytale dedicated servers
 **Conflicts:** None known
-
----
-
-## Permissions
-
-By default, all players can use all commands. Server administrators can restrict access through their permission management system if desired.
 
 ---
 

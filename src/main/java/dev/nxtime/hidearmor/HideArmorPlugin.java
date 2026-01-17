@@ -288,7 +288,7 @@ public class HideArmorPlugin extends JavaPlugin {
                         } catch (Throwable ignored) {
                         }
                     });
-                }, 50, TimeUnit.MILLISECONDS);
+                }, HideArmorState.getRefreshDelayMs(), TimeUnit.MILLISECONDS);
                 inventoryRefreshTasks.put(uuid, task);
             }
         });
@@ -414,6 +414,7 @@ public class HideArmorPlugin extends JavaPlugin {
             if (model.config != null) {
                 HideArmorState.setDefaultMask(model.config.defaultMask);
                 HideArmorState.setForcedMask(model.config.forcedMask);
+                HideArmorState.setRefreshDelayMs(model.config.refreshDelayMs);
             }
 
             return loaded;
@@ -463,6 +464,7 @@ public class HideArmorPlugin extends JavaPlugin {
             model.config = new GlobalConfig();
             model.config.defaultMask = HideArmorState.getDefaultMask();
             model.config.forcedMask = HideArmorState.getForcedMask();
+            model.config.refreshDelayMs = HideArmorState.getRefreshDelayMs();
 
             String json = gson.toJson(model);
             Files.writeString(dataFile.toPath(), json, StandardCharsets.UTF_8);
@@ -496,5 +498,7 @@ public class HideArmorPlugin extends JavaPlugin {
         int defaultMask = 0;
         /** Forced mask that overrides all user settings. */
         int forcedMask = 0;
+        /** Refresh delay in milliseconds for inventory change events. */
+        int refreshDelayMs = 50;
     }
 }

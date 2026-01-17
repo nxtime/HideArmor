@@ -34,6 +34,7 @@ public class HideArmorAdminCommand extends AbstractPlayerCommand {
     public HideArmorAdminCommand(String name, String description) {
         super(name, description);
         setAllowsExtraArguments(true);
+        requirePermission("dev.nxtime.hidearmor.command.hidearmoradmin");
     }
 
     @Override

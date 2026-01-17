@@ -50,6 +50,7 @@ public class HideArmorCommand extends AbstractPlayerCommand {
     public HideArmorCommand(String name, String description) {
         super(name, description);
         setAllowsExtraArguments(true);
+        requirePermission("dev.nxtime.hidearmor.command.hidearmor");
     }
 
     /**

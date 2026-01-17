@@ -57,6 +57,7 @@ public final class HideArmorState {
     private static volatile Runnable onChange;
     private static volatile int defaultMask = 0;
     private static volatile int forcedMask = 0;
+    private static volatile int refreshDelayMs = 50; // Default 50ms (1 tick)
 
     /**
      * Private constructor to prevent instantiation.
@@ -122,6 +123,31 @@ public final class HideArmorState {
         int clamped = Math.max(0, Math.min(4095, mask));
         if (forcedMask != clamped) {
             forcedMask = clamped;
+            Runnable callback = onChange;
+            if (callback != null)
+                callback.run();
+        }
+    }
+
+    /**
+     * Retrieves the refresh delay in milliseconds for inventory change events.
+     *
+     * @return the refresh delay in milliseconds
+     */
+    public static int getRefreshDelayMs() {
+        return refreshDelayMs;
+    }
+
+    /**
+     * Sets the refresh delay in milliseconds and triggers persistence.
+     * Higher values reduce flickering but increase latency.
+     *
+     * @param delayMs the new refresh delay (clamped to 10-1000ms)
+     */
+    public static void setRefreshDelayMs(int delayMs) {
+        int clamped = Math.max(10, Math.min(1000, delayMs));
+        if (refreshDelayMs != clamped) {
+            refreshDelayMs = clamped;
             Runnable callback = onChange;
             if (callback != null)
                 callback.run();
