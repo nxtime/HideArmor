@@ -15,7 +15,10 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import dev.nxtime.hidearmor.HideArmorState;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.Message;
 
+import dev.nxtime.hidearmor.util.TranslationManager;
+import dev.nxtime.hidearmor.util.ColorConfig;
 import javax.annotation.Nonnull;
 
 /**
@@ -23,7 +26,7 @@ import javax.annotation.Nonnull;
  * Uses Hytale Settings-style UI with static layout.
  *
  * @author nxtime
- * @version 0.5.0
+ * @version 0.6.0
  */
 public class HideArmorGuiPage extends InteractiveCustomUIPage<HideArmorGuiPage.ArmorGuiData> {
 
@@ -39,6 +42,49 @@ public class HideArmorGuiPage extends InteractiveCustomUIPage<HideArmorGuiPage.A
 
                 var player = store.getComponent(ref,
                                 Player.getComponentType());
+
+                // Set translated text
+                if (player != null) {
+                        uiCommandBuilder.set("#MainTitle.Text", TranslationManager.get(player, "ui.title"));
+
+                        uiCommandBuilder.set("#SectionSelf.Text", TranslationManager.get(player, "ui.section.self"));
+                        uiCommandBuilder.set("#SectionHideOthers.Text",
+                                        TranslationManager.get(player, "ui.section.hide_others"));
+                        uiCommandBuilder.set("#SectionAllowOthers.Text",
+                                        TranslationManager.get(player, "ui.section.allow_others"));
+                        uiCommandBuilder.set("#SectionLanguage.Text",
+                                        TranslationManager.get(player, "ui.section.language"));
+                        uiCommandBuilder.set("#LanguageLabel.Text",
+                                        TranslationManager.get(player, "ui.label.language"));
+
+                        uiCommandBuilder.set("#HelmetSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_helmet"));
+                        uiCommandBuilder.set("#ChestSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_chest"));
+                        uiCommandBuilder.set("#GauntletsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_hands"));
+                        uiCommandBuilder.set("#LeggingsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_legs"));
+
+                        uiCommandBuilder.set("#HideOthersHelmetSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_others_helmet"));
+                        uiCommandBuilder.set("#HideOthersChestSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_others_chest"));
+                        uiCommandBuilder.set("#HideOthersGauntletsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_others_hands"));
+                        uiCommandBuilder.set("#HideOthersLeggingsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_others_legs"));
+
+                        uiCommandBuilder.set("#AllowOthersHelmetSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.allow_helmet"));
+                        uiCommandBuilder.set("#AllowOthersChestSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.allow_chest"));
+                        uiCommandBuilder.set("#AllowOthersGauntletsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.allow_hands"));
+                        uiCommandBuilder.set("#AllowOthersLeggingsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.allow_legs"));
+                }
+
                 int mask = HideArmorState.getMask(player.getUuid());
 
                 // Self armor (bits 0-3)
@@ -108,6 +154,20 @@ public class HideArmorGuiPage extends InteractiveCustomUIPage<HideArmorGuiPage.A
                 uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged,
                                 "#AllowOthersLeggingsSetting #CheckBox",
                                 EventData.of("Button", "AllowOthersLeggings"), false);
+
+                // Register event handlers - Language buttons
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangEnBtn",
+                                EventData.of("Button", "LangEn"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangEsBtn",
+                                EventData.of("Button", "LangEs"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangPtBtn",
+                                EventData.of("Button", "LangPt"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangFrBtn",
+                                EventData.of("Button", "LangFr"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangDeBtn",
+                                EventData.of("Button", "LangDe"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangRuBtn",
+                                EventData.of("Button", "LangRu"), false);
         }
 
         @Override
@@ -118,7 +178,30 @@ public class HideArmorGuiPage extends InteractiveCustomUIPage<HideArmorGuiPage.A
                 var player = store.getComponent(ref,
                                 Player.getComponentType());
 
-                if (data.button != null) {
+                if (data.button != null && player != null) {
+                        // Check for language buttons first
+                        String langToSet = null;
+                        switch (data.button) {
+                                case "LangEn" -> langToSet = "en_us";
+                                case "LangEs" -> langToSet = "es_es";
+                                case "LangPt" -> langToSet = "pt_br";
+                                case "LangFr" -> langToSet = "fr_fr";
+                                case "LangDe" -> langToSet = "de_de";
+                                case "LangRu" -> langToSet = "ru_ru";
+                        }
+
+                        if (langToSet != null) {
+                                HideArmorState.setLanguage(player.getUuid(), langToSet);
+                                player.sendMessage(Message.join(
+                                                Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
+                                                Message.raw(TranslationManager.get(player, "command.language_set",
+                                                                langToSet.toUpperCase()))
+                                                                .color(ColorConfig.SUCCESS)));
+                                // Update the UI to reflect new language
+                                this.sendUpdate();
+                                return;
+                        }
+
                         switch (data.button) {
                                 // Self armor toggles
                                 case "Helmet" -> HideArmorState.toggleSlot(player.getUuid(), HideArmorState.SLOT_HEAD);

@@ -13,6 +13,7 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import dev.nxtime.hidearmor.HideArmorState;
 import dev.nxtime.hidearmor.util.ColorConfig;
 import dev.nxtime.hidearmor.util.CommandUtils;
+import dev.nxtime.hidearmor.util.TranslationManager;
 import dev.nxtime.hidearmor.gui.HideArmorGuiPage;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 
@@ -69,42 +70,49 @@ public class HideArmorCommand extends AbstractPlayerCommand {
 
         String[] args = CommandUtils.parseArgs(context, "hidearmor");
         if (args.length == 0) {
-            // Open the GUI when no arguments provided
             openGui(player);
             return;
         }
 
         String first = args[0].toLowerCase();
+
+        // Language command
+        if ("language".equals(first) || "lang".equals(first)) {
+            if (args.length < 2) {
+                player.sendMessage(
+                        Message.raw(TranslationManager.get(player, "command.usage.header")).color(ColorConfig.ERROR));
+                return;
+            }
+            String lang = args[1].toLowerCase();
+            HideArmorState.setLanguage(player.getUuid(), lang);
+            player.sendMessage(Message.join(
+                    Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
+                    Message.raw(TranslationManager.get(player, "command.language_set", lang.toUpperCase()))
+                            .color(ColorConfig.SUCCESS)));
+            return;
+        }
+
         if ("status".equals(first)) {
             sendStatus(player);
             return;
         }
 
-        // Handle hideothers subcommand
         if ("hideothers".equals(first)) {
             handleHideOthers(player, args);
             return;
         }
 
-        // Handle allowothers subcommand
         if ("allowothers".equals(first)) {
             handleAllowOthers(player, args);
             return;
         }
-
-        // Test mode (disabled in production)
-        // Uncomment to enable single-player testing
-        // if ("test".equals(first)) {
-        // new HideArmorTestCommand("test", "Test mode").executeSync(context);
-        // return;
-        // }
 
         if ("all".equals(first)) {
             int current = HideArmorState.getMask(player.getUuid());
             int newMask = HideArmorState.setAll(player.getUuid(), (current & 0xF) != 0xF);
             player.sendMessage(Message.join(
                     Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
-                    Message.raw(HideArmorState.formatMask(newMask)).color(ColorConfig.TEXT)));
+                    Message.raw(formatMask(player, newMask)).color(ColorConfig.TEXT)));
             forceRefresh(player);
             return;
         }
@@ -121,7 +129,7 @@ public class HideArmorCommand extends AbstractPlayerCommand {
                 int newMask = HideArmorState.setAll(player.getUuid(), enable);
                 player.sendMessage(Message.join(
                         Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
-                        Message.raw(HideArmorState.formatMask(newMask)).color(ColorConfig.TEXT)));
+                        Message.raw(formatMask(player, newMask)).color(ColorConfig.TEXT)));
                 forceRefresh(player);
                 return;
             }
@@ -138,7 +146,7 @@ public class HideArmorCommand extends AbstractPlayerCommand {
             HideArmorState.setMask(player.getUuid(), newMask);
             player.sendMessage(Message.join(
                     Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
-                    Message.raw(HideArmorState.formatMask(newMask)).color(ColorConfig.TEXT)));
+                    Message.raw(formatMask(player, newMask)).color(ColorConfig.TEXT)));
             forceRefresh(player);
             return;
         }
@@ -148,7 +156,7 @@ public class HideArmorCommand extends AbstractPlayerCommand {
             int newMask = HideArmorState.toggleSlot(player.getUuid(), slot);
             player.sendMessage(Message.join(
                     Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
-                    Message.raw(HideArmorState.formatMask(newMask)).color(ColorConfig.TEXT)));
+                    Message.raw(formatMask(player, newMask)).color(ColorConfig.TEXT)));
             forceRefresh(player);
             return;
         }
@@ -156,97 +164,74 @@ public class HideArmorCommand extends AbstractPlayerCommand {
         sendHelp(player);
     }
 
-    /**
-     * Sends command usage help to the player.
-     *
-     * @param player the player to send help to
-     */
     private void sendHelp(Player player) {
         player.sendMessage(Message.join(
                 Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
-                Message.raw("Usage: /hidearmor [status|all|hideothers|allowothers|on|off] [piece]")
-                        .color(ColorConfig.HIGHLIGHT)));
+                Message.raw(TranslationManager.get(player, "command.usage.header")).color(ColorConfig.HIGHLIGHT)));
         player.sendMessage(Message.join(
                 Message.raw("  /hidearmor ").color(ColorConfig.TEXT),
-                Message.raw("- Open GUI").color(ColorConfig.HIGHLIGHT)));
+                Message.raw(TranslationManager.get(player, "command.usage.gui")).color(ColorConfig.HIGHLIGHT)));
         player.sendMessage(Message.join(
                 Message.raw("  /hidearmor status ").color(ColorConfig.TEXT),
-                Message.raw("- Show all settings").color(ColorConfig.HIGHLIGHT)));
+                Message.raw(TranslationManager.get(player, "command.usage.status")).color(ColorConfig.HIGHLIGHT)));
         player.sendMessage(Message.join(
                 Message.raw("  /hidearmor hideothers [all|head|chest|hands|legs] ").color(ColorConfig.TEXT),
-                Message.raw("- Hide other players' armor").color(ColorConfig.HIGHLIGHT)));
+                Message.raw(TranslationManager.get(player, "command.usage.hideothers")).color(ColorConfig.HIGHLIGHT)));
         player.sendMessage(Message.join(
                 Message.raw("  /hidearmor allowothers [all|head|chest|hands|legs] ").color(ColorConfig.TEXT),
-                Message.raw("- Allow others to hide your armor").color(ColorConfig.HIGHLIGHT)));
+                Message.raw(TranslationManager.get(player, "command.usage.allowothers")).color(ColorConfig.HIGHLIGHT)));
     }
 
-    /**
-     * Sends a formatted status message showing all three categories of settings.
-     * <p>
-     * Displays:
-     * <ul>
-     * <li>Hide My Armor (bits 0-3)</li>
-     * <li>Hide Others' Armor (bits 4-7)</li>
-     * <li>Allow Others (bits 8-11)</li>
-     * </ul>
-     *
-     * @param player the player to send status to
-     */
     private void sendStatus(Player player) {
         int mask = HideArmorState.getMask(player.getUuid());
 
-        // Self armor (bits 0-3)
-        String selfArmor = formatSectionMask(mask, 0, 3);
+        String selfArmor = formatSectionMask(player, mask, 0, 3);
+        String hideOthers = formatSectionMask(player, mask, 4, 7);
+        String allowOthers = formatSectionMask(player, mask, 8, 11);
 
-        // Hide others (bits 4-7)
-        String hideOthers = formatSectionMask(mask, 4, 7);
-
-        // Allow others (bits 8-11)
-        String allowOthers = formatSectionMask(mask, 8, 11);
-
-        player.sendMessage(Message.raw("=== Armor Visibility Settings ===").color(ColorConfig.PREFIX_COLOR));
+        player.sendMessage(
+                Message.raw(TranslationManager.get(player, "status.header")).color(ColorConfig.PREFIX_COLOR));
         player.sendMessage(Message.join(
-                Message.raw("Hide My Armor: ").color(ColorConfig.HIGHLIGHT),
+                Message.raw(TranslationManager.get(player, "status.hide_my_armor")).color(ColorConfig.HIGHLIGHT),
                 Message.raw(selfArmor).color(ColorConfig.TEXT)));
         player.sendMessage(Message.join(
-                Message.raw("Hide Others' Armor: ").color(ColorConfig.HIGHLIGHT),
+                Message.raw(TranslationManager.get(player, "status.hide_others_armor")).color(ColorConfig.HIGHLIGHT),
                 Message.raw(hideOthers).color(ColorConfig.TEXT)));
         player.sendMessage(Message.join(
-                Message.raw("Allow Others: ").color(ColorConfig.HIGHLIGHT),
+                Message.raw(TranslationManager.get(player, "status.allow_others")).color(ColorConfig.HIGHLIGHT),
                 Message.raw(allowOthers).color(ColorConfig.TEXT)));
     }
 
-    /**
-     * Formats a range of bits from a mask into a human-readable string.
-     * <p>
-     * Example: bits 4-7 with value 0b00110000 returns "Chest, Hands"
-     *
-     * @param mask     the full 12-bit mask
-     * @param startBit the starting bit position (inclusive)
-     * @param endBit   the ending bit position (inclusive)
-     * @return comma-separated list of armor pieces, or "none"
-     */
-    private String formatSectionMask(int mask, int startBit, int endBit) {
+    private String formatMask(Player player, int mask) {
+        if (mask == 0)
+            return TranslationManager.get(player, "status.none");
+        // For simplicity, we only show self armor in simple toggle feedback unless we
+        // want to be more verbose
+        // But the previous implementation showed everything set in self armor slots
+        // only for simple toggles.
+        // Let's stick to showing active self armor for consistency with previous
+        // behavior if possible,
+        // OR format based on what changed.
+        // The previous simple `HideArmorState.formatMask` only showed self armor (bits
+        // 0-3).
+        return formatSectionMask(player, mask, 0, 3);
+    }
+
+    private String formatSectionMask(Player player, int mask, int startBit, int endBit) {
         StringBuilder out = new StringBuilder();
-        String[] names = { "Head", "Chest", "Hands", "Legs" };
+        String[] keys = { "armor.head", "armor.chest", "armor.hands", "armor.legs" };
 
         for (int i = startBit; i <= endBit; i++) {
             if ((mask & (1 << i)) != 0) {
                 if (out.length() > 0)
                     out.append(", ");
-                out.append(names[i - startBit]);
+                out.append(TranslationManager.get(player, keys[i - startBit]));
             }
         }
 
-        return out.length() > 0 ? out.toString() : "none";
+        return out.length() > 0 ? out.toString() : TranslationManager.get(player, "status.none");
     }
 
-    /**
-     * Resolves a string argument to an armor slot index.
-     *
-     * @param arg the argument string ("head", "chest", "hands", or "legs")
-     * @return the slot index (0-3), or -1 if invalid
-     */
     private int resolveSlot(String arg) {
         return switch (arg) {
             case "head" -> HideArmorState.SLOT_HEAD;
@@ -257,19 +242,10 @@ public class HideArmorCommand extends AbstractPlayerCommand {
         };
     }
 
-    /**
-     * Handles the "hideothers" subcommand for controlling visibility of other
-     * players' armor.
-     * <p>
-     * Usage: {@code /hidearmor hideothers <piece|all>}
-     *
-     * @param player the player executing the command
-     * @param args   the full argument array (including "hideothers")
-     */
     private void handleHideOthers(Player player, String[] args) {
         if (args.length < 2) {
             player.sendMessage(
-                    Message.raw("Usage: /hidearmor hideothers [all|head|chest|hands|legs]").color(ColorConfig.ERROR));
+                    Message.raw(TranslationManager.get(player, "error.usage.hideothers")).color(ColorConfig.ERROR));
             return;
         }
 
@@ -280,40 +256,35 @@ public class HideArmorCommand extends AbstractPlayerCommand {
             HideArmorState.setAllHideOthers(player.getUuid(), hideAll);
             player.sendMessage(Message.join(
                     Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
-                    Message.raw("Hide Others' Armor: ").color(ColorConfig.TEXT),
-                    Message.raw(hideAll ? "All" : "None").color(hideAll ? ColorConfig.ERROR : ColorConfig.SUCCESS)));
+                    Message.raw(TranslationManager.get(player, "status.hide_others_armor")).color(ColorConfig.TEXT),
+                    Message.raw(hideAll ? TranslationManager.get(player, "common.all")
+                            : TranslationManager.get(player, "common.none"))
+                            .color(hideAll ? ColorConfig.ERROR : ColorConfig.SUCCESS)));
             forceRefresh(player);
             return;
         }
 
         int slot = resolveSlot(target);
         if (slot < 0) {
-            player.sendMessage(Message.raw("Invalid piece. Use: head, chest, hands, or legs").color(ColorConfig.ERROR));
+            player.sendMessage(
+                    Message.raw(TranslationManager.get(player, "error.invalid_piece")).color(ColorConfig.ERROR));
             return;
         }
 
         HideArmorState.toggleHideOthers(player.getUuid(), slot);
         int mask = HideArmorState.getMask(player.getUuid());
-        String hideOthers = formatSectionMask(mask, 4, 7);
+        String hideOthers = formatSectionMask(player, mask, 4, 7);
         player.sendMessage(Message.join(
                 Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
-                Message.raw("Hide Others' Armor: ").color(ColorConfig.TEXT),
+                Message.raw(TranslationManager.get(player, "status.hide_others_armor")).color(ColorConfig.TEXT),
                 Message.raw(hideOthers).color(ColorConfig.HIGHLIGHT)));
         forceRefresh(player);
     }
 
-    /**
-     * Handles the "allowothers" subcommand for controlling permissions.
-     * <p>
-     * Usage: {@code /hidearmor allowothers <piece|all>}
-     *
-     * @param player the player executing the command
-     * @param args   the full argument array (including "allowothers")
-     */
     private void handleAllowOthers(Player player, String[] args) {
         if (args.length < 2) {
             player.sendMessage(
-                    Message.raw("Usage: /hidearmor allowothers [all|head|chest|hands|legs]").color(ColorConfig.ERROR));
+                    Message.raw(TranslationManager.get(player, "error.usage.allowothers")).color(ColorConfig.ERROR));
             return;
         }
 
@@ -324,36 +295,31 @@ public class HideArmorCommand extends AbstractPlayerCommand {
             HideArmorState.setAllAllowOthers(player.getUuid(), allowAll);
             player.sendMessage(Message.join(
                     Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
-                    Message.raw("Allow Others: ").color(ColorConfig.TEXT),
-                    Message.raw(allowAll ? "All" : "None").color(allowAll ? ColorConfig.SUCCESS : ColorConfig.ERROR)));
+                    Message.raw(TranslationManager.get(player, "status.allow_others")).color(ColorConfig.TEXT),
+                    Message.raw(allowAll ? TranslationManager.get(player, "common.all")
+                            : TranslationManager.get(player, "common.none"))
+                            .color(allowAll ? ColorConfig.SUCCESS : ColorConfig.ERROR)));
             forceRefresh(player);
             return;
         }
 
         int slot = resolveSlot(target);
         if (slot < 0) {
-            player.sendMessage(Message.raw("Invalid piece. Use: head, chest, hands, or legs").color(ColorConfig.ERROR));
+            player.sendMessage(
+                    Message.raw(TranslationManager.get(player, "error.invalid_piece")).color(ColorConfig.ERROR));
             return;
         }
 
         HideArmorState.toggleAllowOthers(player.getUuid(), slot);
         int mask = HideArmorState.getMask(player.getUuid());
-        String allowOthers = formatSectionMask(mask, 8, 11);
+        String allowOthers = formatSectionMask(player, mask, 8, 11);
         player.sendMessage(Message.join(
                 Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
-                Message.raw("Allow Others: ").color(ColorConfig.TEXT),
+                Message.raw(TranslationManager.get(player, "status.allow_others")).color(ColorConfig.TEXT),
                 Message.raw(allowOthers).color(ColorConfig.HIGHLIGHT)));
         forceRefresh(player);
     }
 
-    /**
-     * Opens the interactive armor visibility GUI for the player.
-     * <p>
-     * Creates and displays a {@link HideArmorGuiPage} with
-     * dismissible lifetime.
-     *
-     * @param player the player to show the GUI to
-     */
     private void openGui(Player player) {
         var ref = player.getReference();
         if (ref != null && ref.isValid()) {
@@ -373,14 +339,6 @@ public class HideArmorCommand extends AbstractPlayerCommand {
         }
     }
 
-    /**
-     * Forces an equipment refresh for the player to apply visual changes
-     * immediately.
-     * <p>
-     * Executes on the world thread to avoid concurrent modification issues.
-     *
-     * @param player the player whose equipment should be refreshed
-     */
     private void forceRefresh(Player player) {
         var world = player.getWorld();
         if (world == null)

@@ -54,10 +54,12 @@ public final class HideArmorState {
     public static final int SLOT_ALLOW_OTHERS_LEGS = 11;
 
     private static final ConcurrentHashMap<UUID, Integer> MASKS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<UUID, String> LANGUAGES = new ConcurrentHashMap<>();
     private static volatile Runnable onChange;
     private static volatile int defaultMask = 0;
     private static volatile int forcedMask = 0;
     private static volatile int refreshDelayMs = 50; // Default 50ms (1 tick)
+    private static volatile String defaultLanguage = "en_us"; // Default language for new players
 
     /**
      * Private constructor to prevent instantiation.
@@ -252,6 +254,15 @@ public final class HideArmorState {
     }
 
     /**
+     * Creates an immutable snapshot of all current player languages.
+     *
+     * @return a map of UUID to language codes
+     */
+    public static Map<UUID, String> snapshotLanguages() {
+        return new HashMap<>(LANGUAGES);
+    }
+
+    /**
      * Formats the self-armor bits (0-3) into a human-readable string.
      * <p>
      * Example output: "Head, Chest" or "none" if no bits are set.
@@ -410,5 +421,57 @@ public final class HideArmorState {
         int newMask = allow ? (mask | allowOthersBits) : (mask & ~0xF00);
         setMask(uuid, newMask);
         return newMask;
+    }
+
+    /**
+     * Gets the language code for a player.
+     * Falls back to default language if player has no specific preference.
+     *
+     * @param uuid the player's UUID
+     * @return the language code, or default language if not set
+     */
+    public static String getLanguage(UUID uuid) {
+        String lang = LANGUAGES.get(uuid);
+        return lang != null ? lang : defaultLanguage;
+    }
+
+    /**
+     * Sets the language code for a player.
+     *
+     * @param uuid the player's UUID
+     * @param lang the language code
+     */
+    public static void setLanguage(UUID uuid, String lang) {
+        if (lang == null) {
+            LANGUAGES.remove(uuid);
+        } else {
+            LANGUAGES.put(uuid, lang);
+        }
+        Runnable callback = onChange;
+        if (callback != null)
+            callback.run();
+    }
+
+    /**
+     * Gets the default language for the server.
+     *
+     * @return the default language code
+     */
+    public static String getDefaultLanguage() {
+        return defaultLanguage;
+    }
+
+    /**
+     * Sets the default language for the server.
+     *
+     * @param lang the language code
+     */
+    public static void setDefaultLanguage(String lang) {
+        if (lang != null && !lang.equals(defaultLanguage)) {
+            defaultLanguage = lang;
+            Runnable callback = onChange;
+            if (callback != null)
+                callback.run();
+        }
     }
 }

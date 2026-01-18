@@ -1,5 +1,5 @@
 // HideArmor Admin Menu styled like Hytale Settings
-// Two-column layout for configuring global defaults
+// Three-column layout for configuring global defaults
 
 $C = "../Common.ui";
 $Container = "../Container.ui";
@@ -12,7 +12,7 @@ $Container = "../Container.ui";
 
   Label #Name {
     Anchor: (Left: 16);
-    Style: (VerticalAlignment: Center, TextColor: #96a9be, RenderUppercase: false, FontSize: 16);
+    Style: (VerticalAlignment: Center, TextColor: #96a9be, RenderUppercase: false, FontSize: 15);
   }
 
   Group {
@@ -27,7 +27,7 @@ $Container = "../Container.ui";
 // Section header macro
 @SectionHeader = Label {
   Anchor: (Bottom: 12);
-  Style: (FontSize: 16, TextColor: #96a9be, RenderUppercase: true, RenderBold: true);
+  Style: (FontSize: 15, TextColor: #96a9be, RenderUppercase: true, RenderBold: true);
 };
 
 // Primary button style for action buttons
@@ -37,13 +37,20 @@ $Container = "../Container.ui";
   Pressed: (Background: #2a6b3f, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
 );
 
+// Language button style
+@LangButtonStyle = TextButtonStyle(
+  Default: (Background: #3a5068, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #4a6078, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #2a4058, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
 $C.@PageOverlay {
   $C.@Container {
-    Anchor: (Width: 720, Height: 850); // Taller for all sections
+    Anchor: (Width: 820, Height: 750);
 
     #Title {
       Group {
-        $C.@Title {
+        $C.@Title #MainTitle {
           @Text = "Default & Forced Settings";
         }
       }
@@ -55,38 +62,40 @@ $C.@PageOverlay {
 
       Group {
          LayoutMode: Top;
-         Anchor: (Width: 680, Height: 40);
-         Label {
+         Anchor: (Width: 780, Height: 35);
+         Label #DescriptionLabel {
              Text: "These settings will be applied to all new players or players who have not configured their preferences.";
              Style: (TextColor: #e0e0e0, FontSize: 14, Wrap: true);
-             Anchor: (Bottom: 20);
+             Anchor: (Bottom: 15);
          }
       }
 
-      // Columns Wrapper for Defaults
+      // Three Columns for Default Settings
       Group {
         LayoutMode: Left;
-        Anchor: (Height: 420); // Fixed height for columns
+        Anchor: (Height: 250);
         
-        // Left column: Self + Hide Others
+        // Left column: Hide Self Armor
         Group #LeftColumn {
           LayoutMode: Top;
           FlexWeight: 1;
-          Padding: (Right: 15);
+          Padding: (Right: 10);
   
-          // Section 1: Default Self Armor
-          @SectionHeader { Text: "DEFAULT: HIDE SELF ARMOR"; }
+          @SectionHeader #SectionDefaultSelf { Text: "DEFAULT: HIDE SELF"; }
   
           @SettingsRow #HelmetSetting { #Name { Text: "Hide Helmet"; } }
           @SettingsRow #ChestSetting { #Name { Text: "Hide Chestplate"; } }
           @SettingsRow #GauntletsSetting { #Name { Text: "Hide Gauntlets"; } }
           @SettingsRow #LeggingsSetting { #Name { Text: "Hide Leggings"; } }
+        }
   
-          // Spacer
-          Group { Anchor: (Height: 16); }
+        // Middle column: Hide Others
+        Group #MiddleColumn {
+          LayoutMode: Top;
+          FlexWeight: 1;
+          Padding: (Left: 5, Right: 5);
   
-          // Section 2: Default Hide Others
-          @SectionHeader { Text: "DEFAULT: HIDE OTHERS"; }
+          @SectionHeader #SectionDefaultHideOthers { Text: "DEFAULT: HIDE OTHERS"; }
   
           @SettingsRow #HideOthersHelmetSetting { #Name { Text: "Hide Helmets"; } }
           @SettingsRow #HideOthersChestSetting { #Name { Text: "Hide Chestplates"; } }
@@ -98,27 +107,26 @@ $C.@PageOverlay {
         Group #RightColumn {
           LayoutMode: Top;
           FlexWeight: 1;
-          Padding: (Left: 15);
+          Padding: (Left: 10);
   
-          // Section 3: Default Let Others Hide My Armor
-          @SectionHeader { Text: "DEFAULT: ALLOW OTHERS"; }
+          @SectionHeader #SectionDefaultAllowOthers { Text: "DEFAULT: ALLOW OTHERS"; }
   
           @SettingsRow #AllowOthersHelmetSetting { #Name { Text: "Allow Helmet"; } }
-          @SettingsRow #AllowOthersChestSetting { #Name { Text: "Allow Chestplate"; } }
+          @SettingsRow #AllowOthersChestSetting { #Name { Text: "Allow Chest"; } }
           @SettingsRow #AllowOthersGauntletsSetting { #Name { Text: "Allow Gauntlets"; } }
           @SettingsRow #AllowOthersLeggingsSetting { #Name { Text: "Allow Leggings"; } }
         }
       }
 
       // Spacer
-      Group { Anchor: (Height: 35); }
+      Group { Anchor: (Height: 20); }
 
       // Forced Settings Section
-      @SectionHeader { Text: "GLOBAL OVERRIDES (FORCE HIDE)"; }
-      Label {
+      @SectionHeader #SectionForced { Text: "GLOBAL OVERRIDES (FORCE HIDE)"; }
+      Label #ForceWarningLabel {
           Text: "Settings enabled here will be FORCED ON for all players inside the server, overriding any personal preference.";
-          Style: (TextColor: #cc6666, FontSize: 14, Wrap: true); // Red warning text
-          Anchor: (Bottom: 10, Width: 680);
+          Style: (TextColor: #cc6666, FontSize: 14, Wrap: true);
+          Anchor: (Bottom: 10, Width: 780);
       }
 
       Group {
@@ -127,30 +135,30 @@ $C.@PageOverlay {
         Group {
             LayoutMode: Top;
             FlexWeight: 1;
-            Padding: (Right: 15);
-            @SettingsRow #ForceHelmetSetting { #Name { Text: "Force Hide Helmet"; } }
-            @SettingsRow #ForceChestSetting { #Name { Text: "Force Hide Chestplate"; } }
+            Padding: (Right: 10);
+            @SettingsRow #ForceHelmetSetting { #Name { Text: "Force Helmet"; } }
+            @SettingsRow #ForceChestSetting { #Name { Text: "Force Chestplate"; } }
         }
         Group {
             LayoutMode: Top;
             FlexWeight: 1;
-            Padding: (Left: 15);
-            @SettingsRow #ForceGauntletsSetting { #Name { Text: "Force Hide Gauntlets"; } }
-            @SettingsRow #ForceLeggingsSetting { #Name { Text: "Force Hide Leggings"; } }
+            Padding: (Left: 10);
+            @SettingsRow #ForceGauntletsSetting { #Name { Text: "Force Gauntlets"; } }
+            @SettingsRow #ForceLeggingsSetting { #Name { Text: "Force Leggings"; } }
         }
       }
 
       // Spacer
-      Group { Anchor: (Height: 20); }
+      Group { Anchor: (Height: 15); }
 
       // Permission Setup Section
-      @SectionHeader { Text: "QUICK SETUP"; }
+      @SectionHeader #SectionQuickSetup { Text: "QUICK SETUP"; }
       Group #PermissionSetupRow {
         Anchor: (Height: 50);
         LayoutMode: Left;
         Background: #1a2533;
 
-        Label {
+        Label #PermissionLabel {
           Anchor: (Left: 16);
           Text: "Add HideArmor permissions to Adventure group";
           Style: (VerticalAlignment: Center, TextColor: #96a9be, FontSize: 14);
@@ -162,6 +170,62 @@ $C.@PageOverlay {
           Text: "Setup Permissions";
           Anchor: (Width: 160, Height: 32, Right: 14);
           Style: @SetupButtonStyle;
+        }
+      }
+
+      // Spacer
+      Group { Anchor: (Height: 15); }
+
+      // Language Selector Section
+      @SectionHeader #SectionLanguage { Text: "DEFAULT LANGUAGE"; }
+      Group #LanguageRow {
+        Anchor: (Height: 45);
+        LayoutMode: Left;
+        Background: #1a2533;
+
+        Label #LanguageLabel {
+          Anchor: (Left: 16);
+          Text: "Server default language";
+          Style: (VerticalAlignment: Center, TextColor: #96a9be, FontSize: 14);
+        }
+
+        Group { FlexWeight: 1; }
+
+        // Language buttons
+        Group #LanguageButtons {
+          LayoutMode: Left;
+          Anchor: (Right: 14);
+          
+          TextButton #LangEnBtn {
+            Text: "EN";
+            Anchor: (Width: 42, Height: 30, Right: 5);
+            Style: @LangButtonStyle;
+          }
+          TextButton #LangEsBtn {
+            Text: "ES";
+            Anchor: (Width: 42, Height: 30, Right: 5);
+            Style: @LangButtonStyle;
+          }
+          TextButton #LangPtBtn {
+            Text: "PT";
+            Anchor: (Width: 42, Height: 30, Right: 5);
+            Style: @LangButtonStyle;
+          }
+          TextButton #LangFrBtn {
+            Text: "FR";
+            Anchor: (Width: 42, Height: 30, Right: 5);
+            Style: @LangButtonStyle;
+          }
+          TextButton #LangDeBtn {
+            Text: "DE";
+            Anchor: (Width: 42, Height: 30, Right: 5);
+            Style: @LangButtonStyle;
+          }
+          TextButton #LangRuBtn {
+            Text: "RU";
+            Anchor: (Width: 42, Height: 30);
+            Style: @LangButtonStyle;
+          }
         }
       }
 

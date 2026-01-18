@@ -19,6 +19,7 @@ import dev.nxtime.hidearmor.HideArmorPlugin;
 import dev.nxtime.hidearmor.util.PermissionUtils;
 import dev.nxtime.hidearmor.util.ColorConfig;
 import dev.nxtime.hidearmor.util.PluginLogger;
+import dev.nxtime.hidearmor.util.TranslationManager;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.Message;
 
@@ -28,7 +29,7 @@ import javax.annotation.Nonnull;
  * Interactive GUI page for managing DEFAULT armor visibility settings (Admin).
  *
  * @author nxtime
- * @version 0.6.0
+ * @version 0.7.0
  */
 public class HideArmorAdminGuiPage extends InteractiveCustomUIPage<HideArmorAdminGuiPage.AdminGuiData> {
 
@@ -41,6 +42,79 @@ public class HideArmorAdminGuiPage extends InteractiveCustomUIPage<HideArmorAdmi
                         @Nonnull UIEventBuilder uiEventBuilder, @Nonnull Store<EntityStore> store) {
                 // Load the Admin UI file
                 uiCommandBuilder.append("Pages/dev.nxtime_HideArmor_AdminMenu.ui");
+
+                // Get player for translations
+                Player player = store.getComponent(ref, Player.getComponentType());
+
+                // Set translated text for all UI elements
+                if (player != null) {
+                        // Title
+                        uiCommandBuilder.set("#MainTitle.Text", TranslationManager.get(player, "admin.title"));
+
+                        // Description
+                        uiCommandBuilder.set("#DescriptionLabel.Text",
+                                        TranslationManager.get(player, "admin.description"));
+
+                        // Section headers
+                        uiCommandBuilder.set("#SectionDefaultSelf.Text",
+                                        TranslationManager.get(player, "admin.section.default_self"));
+                        uiCommandBuilder.set("#SectionDefaultHideOthers.Text",
+                                        TranslationManager.get(player, "admin.section.default_hide_others"));
+                        uiCommandBuilder.set("#SectionDefaultAllowOthers.Text",
+                                        TranslationManager.get(player, "admin.section.default_allow_others"));
+                        uiCommandBuilder.set("#SectionForced.Text",
+                                        TranslationManager.get(player, "admin.section.forced"));
+                        uiCommandBuilder.set("#ForceWarningLabel.Text",
+                                        TranslationManager.get(player, "admin.force_warning"));
+                        uiCommandBuilder.set("#SectionQuickSetup.Text",
+                                        TranslationManager.get(player, "admin.section.quick_setup"));
+                        uiCommandBuilder.set("#SectionLanguage.Text",
+                                        TranslationManager.get(player, "admin.section.language"));
+
+                        // Labels
+                        uiCommandBuilder.set("#HelmetSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_helmet"));
+                        uiCommandBuilder.set("#ChestSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_chest"));
+                        uiCommandBuilder.set("#GauntletsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_hands"));
+                        uiCommandBuilder.set("#LeggingsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_legs"));
+
+                        uiCommandBuilder.set("#HideOthersHelmetSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_others_helmet"));
+                        uiCommandBuilder.set("#HideOthersChestSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_others_chest"));
+                        uiCommandBuilder.set("#HideOthersGauntletsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_others_hands"));
+                        uiCommandBuilder.set("#HideOthersLeggingsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.hide_others_legs"));
+
+                        uiCommandBuilder.set("#AllowOthersHelmetSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.allow_helmet"));
+                        uiCommandBuilder.set("#AllowOthersChestSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.allow_chest"));
+                        uiCommandBuilder.set("#AllowOthersGauntletsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.allow_hands"));
+                        uiCommandBuilder.set("#AllowOthersLeggingsSetting #Name.Text",
+                                        TranslationManager.get(player, "ui.label.allow_legs"));
+
+                        uiCommandBuilder.set("#ForceHelmetSetting #Name.Text",
+                                        TranslationManager.get(player, "admin.label.force_helmet"));
+                        uiCommandBuilder.set("#ForceChestSetting #Name.Text",
+                                        TranslationManager.get(player, "admin.label.force_chest"));
+                        uiCommandBuilder.set("#ForceGauntletsSetting #Name.Text",
+                                        TranslationManager.get(player, "admin.label.force_hands"));
+                        uiCommandBuilder.set("#ForceLeggingsSetting #Name.Text",
+                                        TranslationManager.get(player, "admin.label.force_legs"));
+
+                        uiCommandBuilder.set("#PermissionLabel.Text",
+                                        TranslationManager.get(player, "admin.permission_label"));
+                        uiCommandBuilder.set("#SetupPermissionsBtn.Text",
+                                        TranslationManager.get(player, "admin.setup_permissions"));
+                        uiCommandBuilder.set("#LanguageLabel.Text",
+                                        TranslationManager.get(player, "admin.language_label"));
+                }
 
                 // Use DEFAULT mask instead of player mask
                 int mask = HideArmorState.getDefaultMask();
@@ -143,6 +217,20 @@ public class HideArmorAdminGuiPage extends InteractiveCustomUIPage<HideArmorAdmi
                 // Setup Permissions button
                 uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#SetupPermissionsBtn",
                                 EventData.of("Button", "SetupPermissions"), false);
+
+                // Language buttons
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangEnBtn",
+                                EventData.of("Button", "LangEn"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangEsBtn",
+                                EventData.of("Button", "LangEs"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangPtBtn",
+                                EventData.of("Button", "LangPt"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangFrBtn",
+                                EventData.of("Button", "LangFr"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangDeBtn",
+                                EventData.of("Button", "LangDe"), false);
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#LangRuBtn",
+                                EventData.of("Button", "LangRu"), false);
         }
 
         @Override
@@ -155,6 +243,7 @@ public class HideArmorAdminGuiPage extends InteractiveCustomUIPage<HideArmorAdmi
                         int currentForced = HideArmorState.getForcedMask();
                         int slotToToggle = -1;
                         boolean isForced = false;
+                        String langToSet = null;
 
                         switch (data.button) {
                                 // Self armor
@@ -197,12 +286,24 @@ public class HideArmorAdminGuiPage extends InteractiveCustomUIPage<HideArmorAdmi
                                         handleSetupPermissions(store, ref);
                                         return; // Don't process as armor toggle
                                 }
+                                // Language buttons
+                                case "LangEn" -> langToSet = "en_us";
+                                case "LangEs" -> langToSet = "es_es";
+                                case "LangPt" -> langToSet = "pt_br";
+                                case "LangFr" -> langToSet = "fr_fr";
+                                case "LangDe" -> langToSet = "de_de";
+                                case "LangRu" -> langToSet = "ru_ru";
+                        }
+
+                        // Handle language change
+                        if (langToSet != null) {
+                                handleLanguageChange(store, ref, langToSet);
+                                return;
                         }
 
                         if (slotToToggle != -1) {
                                 if (isForced) {
                                         int newMask = currentForced ^ (1 << slotToToggle);
-                                        HideArmorState.setForcedMask(newMask);
                                         HideArmorState.setForcedMask(newMask);
                                         // Immediately refresh all players' equipment when force settings change
                                         var plugin = HideArmorPlugin.getInstance();
@@ -217,6 +318,25 @@ public class HideArmorAdminGuiPage extends InteractiveCustomUIPage<HideArmorAdmi
                 }
 
                 // Update the UI to reflect new state
+                this.sendUpdate();
+        }
+
+        /**
+         * Handles language change button click.
+         */
+        private void handleLanguageChange(Store<EntityStore> store, Ref<EntityStore> ref, String langCode) {
+                HideArmorState.setDefaultLanguage(langCode);
+
+                var player = store.getComponent(ref, Player.getComponentType());
+                if (player != null) {
+                        player.sendMessage(Message.join(
+                                        Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
+                                        Message.raw(TranslationManager.get(player, "admin.default_language_set",
+                                                        langCode.toUpperCase()))
+                                                        .color(ColorConfig.SUCCESS)));
+                }
+
+                // Refresh the UI to show new translations
                 this.sendUpdate();
         }
 

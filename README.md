@@ -1,4 +1,4 @@
-# HideArmor v0.7.2-alpha
+# HideArmor v0.8.0-alpha
 
 Advanced armor visibility control for Hytale servers with mutual opt-in system.
 
@@ -41,7 +41,11 @@ Control each armor piece independently:
 
 ### Interactive GUI
 
-Modern Hytale Settings-style interface with two-column layout and checkboxes for easy configuration.
+Modern Hytale Settings-style interface with **three-column layout** and checkboxes for easy configuration.
+
+### Multi-Language Support
+
+Built-in translations for English, Spanish, Portuguese, French, German, and Russian. Change language directly from the UI or via `/hidearmor language <code>`.
 
 ### Persistent Settings
 
@@ -136,16 +140,24 @@ Output:
 
 ## GUI Layout
 
-The interface is organized into two columns with a Hytale Settings-style design:
+The interface is organized into **three columns** with a Hytale Settings-style design:
 
 **Left Column:**
 
 - **Hide My Own Armor** - Independent checkboxes for each armor slot
+
+**Middle Column:**
+
 - **Hide Other Players' Armor** - Choose which pieces to hide on others
 
 **Right Column:**
 
 - **Let Others Hide My Armor** - Grant permission for specific pieces
+
+**Language Selector:**
+
+- Bottom row with buttons for EN, ES, PT, FR, DE, RU
+- Change display language instantly from within the UI
 
 Each section has dark row backgrounds with right-aligned checkboxes and uppercase section headers.
 
@@ -393,6 +405,15 @@ Settings are automatically saved with a 1.5 second debounce to reduce disk I/O.
 ---
 
 ## Version History
+
+**v0.8.0-alpha** - Internationalization & UI Improvements
+
+- Added multi-language support (EN, ES, PT, FR, DE, RU)
+- New three-column layout for both user and admin UIs
+- Language selector in both `/hidearmor` and `/hidearmoradmin` GUIs
+- Server-wide default language setting with persistence
+- Updated command messages to include `[HideArmor]` prefix
+- Removed Chinese language button (requires Font Fix mod for CJK support)
 
 **v0.7.0-alpha** - Admin Configuration & Utilities
 

@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.8.0-alpha] - 2026-01-18
+
+### Added
+
+- **Multi-Language Support** - Built-in translations for 6 languages:
+  - English (en_us), Spanish (es_es), Portuguese (pt_br)
+  - French (fr_fr), German (de_de), Russian (ru_ru)
+- **Language Selector in UI** - Both `/hidearmor` and `/hidearmoradmin` GUIs now have language buttons
+- **Server Default Language** - Admins can set a server-wide default language that persists
+- **`/hidearmor language <code>`** - Command to change display language (alias: `lang`)
+
+### Changed
+
+- **Three-Column Layout** - Both user and admin UIs now use three-column layout for better organization:
+  - Left: Hide My Own Armor
+  - Middle: Hide Other Players' Armor
+  - Right: Let Others Hide My Armor
+- **Message Prefix** - Language change command now uses `[HideArmor]` prefix for consistency
+- **Translation Key Fix** - Fixed `allow_gauntlets` → `allow_hands` typo in admin UI
+
+### Removed
+
+- **Chinese Language Button** - Removed from UI due to Hytale's lack of native CJK font support
+  - Chinese translation file (`zh_cn.json`) still included for future use
+  - Players with Font Fix mod can still use `/hidearmor language zh_cn`
+
+### Technical
+
+- Added `TranslationManager` for centralized localization
+- Added `defaultLanguage` field to `HideArmorState` with persistence in `GlobalConfig`
+- Language files stored in `resources/lang/` as JSON
+- Translation keys follow `category.subcategory.key` naming convention
+
+---
+
 ## [0.7.2-alpha] - 2026-01-17
 
 ### Added

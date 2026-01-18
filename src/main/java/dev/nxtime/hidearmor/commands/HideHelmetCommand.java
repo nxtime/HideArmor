@@ -11,6 +11,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.universe.world.World;
 import dev.nxtime.hidearmor.HideArmorState;
 import dev.nxtime.hidearmor.util.ColorConfig;
+import dev.nxtime.hidearmor.util.TranslationManager;
 
 import javax.annotation.Nonnull;
 
@@ -38,8 +39,9 @@ public class HideHelmetCommand extends AbstractPlayerCommand {
         boolean enabled = !HideArmorState.isHidden(player.getUuid(), HideArmorState.SLOT_HEAD);
         player.sendMessage(Message.join(
                 Message.raw(ColorConfig.BRAND).color(ColorConfig.PREFIX_COLOR),
-                Message.raw("Helmet: ").color(ColorConfig.TEXT),
-                Message.raw(enabled ? "Visible" : "Hidden").color(enabled ? ColorConfig.SUCCESS : ColorConfig.ERROR)));
+                Message.raw(TranslationManager.get(player, "armor.head") + ": ").color(ColorConfig.TEXT),
+                Message.raw(TranslationManager.get(player, enabled ? "status.visible" : "status.hidden"))
+                        .color(enabled ? ColorConfig.SUCCESS : ColorConfig.ERROR)));
 
         forceRefresh(player);
     }

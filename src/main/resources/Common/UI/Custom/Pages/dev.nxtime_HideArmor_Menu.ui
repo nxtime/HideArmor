@@ -1,5 +1,5 @@
 // HideArmor Menu styled like Hytale Settings
-// Two-column layout with "Allow Others" on the right
+// Three-column layout with language selector at bottom
 
 $C = "../Common.ui";
 $Container = "../Container.ui";
@@ -30,61 +30,134 @@ $Container = "../Container.ui";
   Style: (FontSize: 16, TextColor: #96a9be, RenderUppercase: true, RenderBold: true);
 };
 
+// Language button style
+@LangButtonStyle = TextButtonStyle(
+  Default: (Background: #3a5068, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #4a6078, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #2a4058, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
 $C.@PageOverlay {
   $C.@Container {
-    Anchor: (Width: 720, Height: 520);
+    Anchor: (Width: 720, Height: 580);
 
     #Title {
       Group {
-        $C.@Title {
+        $C.@Title #MainTitle {
           @Text = "Armor Visibility Settings";
         }
       }
     }
 
     #Content {
-      LayoutMode: Left;
+      LayoutMode: Top;
       Padding: (Top: 15, Bottom: 15, Left: 20, Right: 20);
 
-      // Left column: Self + Hide Others
-      Group #LeftColumn {
-        LayoutMode: Top;
-        FlexWeight: 1;
-        Padding: (Right: 15);
+      // Columns Wrapper
+      Group {
+        LayoutMode: Left;
+        Anchor: (Height: 400);
+        
+        // Left column: Self Armor
+        Group #LeftColumn {
+          LayoutMode: Top;
+          FlexWeight: 1;
+          Padding: (Right: 10);
 
-        // Section 1: Hide My Own Armor
-        @SectionHeader { Text: "HIDE MY OWN ARMOR"; }
+          // Section 1: Hide My Own Armor
+          @SectionHeader #SectionSelf { Text: "HIDE MY OWN ARMOR"; }
 
-        @SettingsRow #HelmetSetting { #Name { Text: "Hide Helmet"; } }
-        @SettingsRow #ChestSetting { #Name { Text: "Hide Chestplate"; } }
-        @SettingsRow #GauntletsSetting { #Name { Text: "Hide Gauntlets"; } }
-        @SettingsRow #LeggingsSetting { #Name { Text: "Hide Leggings"; } }
+          @SettingsRow #HelmetSetting { #Name { Text: "Hide Helmet"; } }
+          @SettingsRow #ChestSetting { #Name { Text: "Hide Chestplate"; } }
+          @SettingsRow #GauntletsSetting { #Name { Text: "Hide Gauntlets"; } }
+          @SettingsRow #LeggingsSetting { #Name { Text: "Hide Leggings"; } }
+        }
 
-        // Spacer
-        Group { Anchor: (Height: 16); }
+        // Middle column: Hide Others
+        Group #MiddleColumn {
+          LayoutMode: Top;
+          FlexWeight: 1;
+          Padding: (Left: 5, Right: 5);
 
-        // Section 2: Hide Other Players' Armor
-        @SectionHeader { Text: "HIDE OTHER PLAYERS' ARMOR"; }
+          // Section 2: Hide Other Players' Armor
+          @SectionHeader #SectionHideOthers { Text: "HIDE OTHERS' ARMOR"; }
 
-        @SettingsRow #HideOthersHelmetSetting { #Name { Text: "Hide Helmets"; } }
-        @SettingsRow #HideOthersChestSetting { #Name { Text: "Hide Chestplates"; } }
-        @SettingsRow #HideOthersGauntletsSetting { #Name { Text: "Hide Gauntlets"; } }
-        @SettingsRow #HideOthersLeggingsSetting { #Name { Text: "Hide Leggings"; } }
+          @SettingsRow #HideOthersHelmetSetting { #Name { Text: "Hide Helmets"; } }
+          @SettingsRow #HideOthersChestSetting { #Name { Text: "Hide Chestplates"; } }
+          @SettingsRow #HideOthersGauntletsSetting { #Name { Text: "Hide Gauntlets"; } }
+          @SettingsRow #HideOthersLeggingsSetting { #Name { Text: "Hide Leggings"; } }
+        }
+
+        // Right column: Allow Others
+        Group #RightColumn {
+          LayoutMode: Top;
+          FlexWeight: 1;
+          Padding: (Left: 10);
+
+          // Section 3: Let Others Hide My Armor
+          @SectionHeader #SectionAllowOthers { Text: "ALLOW OTHERS"; }
+
+          @SettingsRow #AllowOthersHelmetSetting { #Name { Text: "Allow Helmet"; } }
+          @SettingsRow #AllowOthersChestSetting { #Name { Text: "Allow Chest"; } }
+          @SettingsRow #AllowOthersGauntletsSetting { #Name { Text: "Allow Gauntlets"; } }
+          @SettingsRow #AllowOthersLeggingsSetting { #Name { Text: "Allow Leggings"; } }
+        }
       }
 
-      // Right column: Allow Others
-      Group #RightColumn {
-        LayoutMode: Top;
-        FlexWeight: 1;
-        Padding: (Left: 15);
+      // Spacer
+      Group { Anchor: (Height: 15); }
 
-        // Section 3: Let Others Hide My Armor
-        @SectionHeader { Text: "LET OTHERS HIDE MY ARMOR"; }
+      // Language Selector Section
+      @SectionHeader #SectionLanguage { Text: "LANGUAGE"; }
+      Group #LanguageRow {
+        Anchor: (Height: 45);
+        LayoutMode: Left;
+        Background: #1a2533;
 
-        @SettingsRow #AllowOthersHelmetSetting { #Name { Text: "Allow Helmet"; } }
-        @SettingsRow #AllowOthersChestSetting { #Name { Text: "Allow Chestplate"; } }
-        @SettingsRow #AllowOthersGauntletsSetting { #Name { Text: "Allow Gauntlets"; } }
-        @SettingsRow #AllowOthersLeggingsSetting { #Name { Text: "Allow Leggings"; } }
+        Label #LanguageLabel {
+          Anchor: (Left: 16);
+          Text: "Display language";
+          Style: (VerticalAlignment: Center, TextColor: #96a9be, FontSize: 14);
+        }
+
+        Group { FlexWeight: 1; }
+
+        // Language buttons
+        Group #LanguageButtons {
+          LayoutMode: Left;
+          Anchor: (Right: 14);
+          
+          TextButton #LangEnBtn {
+            Text: "EN";
+            Anchor: (Width: 42, Height: 30, Right: 5);
+            Style: @LangButtonStyle;
+          }
+          TextButton #LangEsBtn {
+            Text: "ES";
+            Anchor: (Width: 42, Height: 30, Right: 5);
+            Style: @LangButtonStyle;
+          }
+          TextButton #LangPtBtn {
+            Text: "PT";
+            Anchor: (Width: 42, Height: 30, Right: 5);
+            Style: @LangButtonStyle;
+          }
+          TextButton #LangFrBtn {
+            Text: "FR";
+            Anchor: (Width: 42, Height: 30, Right: 5);
+            Style: @LangButtonStyle;
+          }
+          TextButton #LangDeBtn {
+            Text: "DE";
+            Anchor: (Width: 42, Height: 30, Right: 5);
+            Style: @LangButtonStyle;
+          }
+          TextButton #LangRuBtn {
+            Text: "RU";
+            Anchor: (Width: 42, Height: 30);
+            Style: @LangButtonStyle;
+          }
+        }
       }
     }
   }

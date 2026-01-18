@@ -18,6 +18,7 @@ import dev.nxtime.hidearmor.util.PluginLogger;
 
 import com.hypixel.hytale.server.core.universe.world.World;
 import dev.nxtime.hidearmor.commands.HideArmorAdminCommand;
+import dev.nxtime.hidearmor.util.TranslationManager;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -62,7 +63,7 @@ import java.util.concurrent.TimeUnit;
  * all entity operations.
  *
  * @author nxtime
- * @version 0.4.0
+ * @version 0.8.0
  * @see HideArmorState
  * @see HideArmorPacketReceiver
  */
@@ -181,6 +182,9 @@ public class HideArmorPlugin extends JavaPlugin {
     protected void setup() {
         // Initialize GUI with logger bridge
         HideArmorGui.init(PluginLogger.createGuiBridge());
+
+        // Initialize translations
+        TranslationManager.init();
 
         initDataFile();
         int loadedCount = loadStateFromDisk();
@@ -410,11 +414,27 @@ public class HideArmorPlugin extends JavaPlugin {
                 }
             }
 
+            // Load languages
+            if (model.languages != null) {
+                for (Map.Entry<String, String> entry : model.languages.entrySet()) {
+                    try {
+                        UUID uuid = UUID.fromString(entry.getKey());
+                        if (entry.getValue() != null) {
+                            HideArmorState.setLanguage(uuid, entry.getValue());
+                        }
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                }
+            }
+
             // Load global config
             if (model.config != null) {
                 HideArmorState.setDefaultMask(model.config.defaultMask);
                 HideArmorState.setForcedMask(model.config.forcedMask);
                 HideArmorState.setRefreshDelayMs(model.config.refreshDelayMs);
+                if (model.config.defaultLanguage != null) {
+                    HideArmorState.setDefaultLanguage(model.config.defaultLanguage);
+                }
             }
 
             return loaded;
@@ -459,12 +479,22 @@ public class HideArmorPlugin extends JavaPlugin {
                 out.put(entry.getKey().toString(), clamped);
             }
 
+            Map<String, String> outLang = new HashMap<>();
+            Map<UUID, String> snapshotLang = HideArmorState.snapshotLanguages();
+            for (Map.Entry<UUID, String> entry : snapshotLang.entrySet()) {
+                if (entry.getValue() != null) {
+                    outLang.put(entry.getKey().toString(), entry.getValue());
+                }
+            }
+
             SaveModel model = new SaveModel();
             model.players = out;
+            model.languages = outLang;
             model.config = new GlobalConfig();
             model.config.defaultMask = HideArmorState.getDefaultMask();
             model.config.forcedMask = HideArmorState.getForcedMask();
             model.config.refreshDelayMs = HideArmorState.getRefreshDelayMs();
+            model.config.defaultLanguage = HideArmorState.getDefaultLanguage();
 
             String json = gson.toJson(model);
             Files.writeString(dataFile.toPath(), json, StandardCharsets.UTF_8);
@@ -486,6 +516,8 @@ public class HideArmorPlugin extends JavaPlugin {
     private static final class SaveModel {
         /** Map of player UUID strings to their 12-bit mask values. */
         Map<String, Integer> players = new HashMap<>();
+        /** Map of player UUID strings to their language code. */
+        Map<String, String> languages = new HashMap<>();
         /** Global configuration settings. */
         GlobalConfig config = new GlobalConfig();
     }
@@ -500,5 +532,7 @@ public class HideArmorPlugin extends JavaPlugin {
         int forcedMask = 0;
         /** Refresh delay in milliseconds for inventory change events. */
         int refreshDelayMs = 50;
+        /** Default language for new players. */
+        String defaultLanguage = "en_us";
     }
 }
